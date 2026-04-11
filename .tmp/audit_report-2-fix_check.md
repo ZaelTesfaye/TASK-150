@@ -1,80 +1,63 @@
-# Recheck Report for `.tmp/audit-report-1.md`
+# Audit Report 2 Fix Check
 
-## Summary
-- Rechecked all 10 prior findings against current code.
-- Result: **7 fixed, 3 partially fixed, 0 unchanged fail**.
+## Scope
+- Source of prior issues: `.tmp/audit-report-2.md`
+- Verification method: static code inspection only (no runtime/test execution)
+- Checked repository path: `repo/`
 
-## Issue-by-issue Status
+## Overall Result
+- Previously reported items checked: **6**
+- Fixed: **6**
+- Partially fixed: **0**
+- Not fixed: **0**
 
-### 1) High - Authorization coverage gaps
-- **Status: Fixed**
-- Evidence:
-  - Config read APIs now enforce RBAC: `repo/app/src/main/java/com/nutriops/app/domain/usecase/config/ManageConfigUseCase.kt:34-37`, `74-77`, `92-95`, `120-123`, `152-160`, `175-178`, `203-206`.
-  - Admin user UI now goes through RBAC use case: `repo/app/src/main/java/com/nutriops/app/ui/admin/AdminUsersScreen.kt:31-34`, `45-47`, `56-58`.
-  - Ticket read/list APIs now enforce role/object checks: `repo/app/src/main/java/com/nutriops/app/domain/usecase/ticket/ManageTicketUseCase.kt:168-228`.
-  - Route-level role guards added: `repo/app/src/main/java/com/nutriops/app/ui/navigation/NavGraph.kt:20-42`, plus guarded routes throughout `:109-283`.
+## Issue-by-Issue Verification
 
-### 2) High - Missing minimum-duration rule enforcement
-- **Status: Fixed**
-- Evidence:
-  - Minimum-duration hold logic implemented: `repo/app/src/main/java/com/nutriops/app/domain/usecase/rules/EvaluateRuleUseCase.kt:86-106`.
-  - Hold state persistence added: `repo/app/src/main/sqldelight/com/nutriops/app/data/local/Rules.sq:68-84`.
-  - Repository support methods added: `repo/app/src/main/java/com/nutriops/app/data/repository/RuleRepository.kt:165-177`.
+### 1) High - Learning plan state mutations lacked object-level authorization
+- Prior status: Fail
+- Current status: **Fixed**
+- Verification:
+  - `transitionStatus` now loads plan and enforces ownership before mutation: `repo/app/src/main/java/com/nutriops/app/domain/usecase/learningplan/ManageLearningPlanUseCase.kt:75-80`
+  - `duplicateForEditing` now loads plan and enforces ownership before duplication: `repo/app/src/main/java/com/nutriops/app/domain/usecase/learningplan/ManageLearningPlanUseCase.kt:95-100`
 
-### 3) High - Idle-only WorkManager scheduling not enforced
-- **Status: Fixed**
-- Evidence:
-  - Idle constraint added: `repo/app/src/main/java/com/nutriops/app/NutriOpsApplication.kt:44-47`.
-  - Applied to reminder/SLA/rule workers: `:50-53`, `:61-64`, `:72-74`.
+### 2) High - Ticket evidence upload lacked ownership check for end users
+- Prior status: Fail
+- Current status: **Fixed**
+- Verification:
+  - `addEvidence` now resolves ticket and applies ownership check before insert: `repo/app/src/main/java/com/nutriops/app/domain/usecase/ticket/ManageTicketUseCase.kt:108-112`
 
-### 4) High - Sensitive fields persisted plaintext
-- **Status: Fixed**
-- Evidence:
-  - Ticket compensation columns migrated to text/encrypted storage intent: `repo/app/src/main/sqldelight/com/nutriops/app/data/local/Tickets.sq:16-17`.
-  - Ticket repository now encrypts/decrypts compensation amounts: `repo/app/src/main/java/com/nutriops/app/data/repository/TicketRepository.kt:246-247`, `289-290`, `364-369`.
-  - Order repository encrypts amount/notes writes: `repo/app/src/main/java/com/nutriops/app/data/repository/OrderRepository.kt:35-36`, `86`, `110`, decrypt helpers at `:128`, `:136`.
+### 3) High - Messaging read/update APIs lacked actor/ownership enforcement
+- Prior status: Fail
+- Current status: **Fixed**
+- Verification:
+  - Ownership + permission added for reads/count: `repo/app/src/main/java/com/nutriops/app/domain/usecase/messaging/ManageMessagingUseCase.kt:87-109`
+  - Ownership + permission added for mark operations: `repo/app/src/main/java/com/nutriops/app/domain/usecase/messaging/ManageMessagingUseCase.kt:111-126`
+  - UI call sites updated to pass actor context: 
+    - `repo/app/src/main/java/com/nutriops/app/ui/enduser/UserMessagesScreen.kt:46,56,63`
+    - `repo/app/src/main/java/com/nutriops/app/ui/enduser/UserDashboardScreen.kt:37`
 
-### 5) High - Image downsampling/LRU path missing
-- **Status: Partially Fixed**
-- Evidence:
-  - LRU cache configured in Coil image loader: `repo/app/src/main/java/com/nutriops/app/di/ImageLoaderModule.kt:24-27`.
-  - App wired to `ImageLoaderFactory`: `repo/app/src/main/java/com/nutriops/app/NutriOpsApplication.kt:18`, `23-24`, `32`.
-  - But no explicit downsampling usage with `IMAGE_MAX_DIMENSION_PX`/decode sizing found in UI/image requests; constants remain unused: `repo/app/src/main/java/com/nutriops/app/config/AppConfig.kt:49-50`.
+### 4) High - DB encryption fallback used hardcoded static key
+- Prior status: Fail
+- Current status: **Fixed**
+- Verification:
+  - Static fallback removed; missing key now throws: `repo/app/src/main/java/com/nutriops/app/config/AppConfig.kt:16-19`
+  - Key is now derived from Keystore if not provided: `repo/app/src/main/java/com/nutriops/app/config/AppConfig.kt:102-112`
+  - New keystore-backed database key manager added: `repo/app/src/main/java/com/nutriops/app/security/DatabaseKeyManager.kt:35-52`
 
-### 6) High - Test suite credibility issues (invalid test construction)
-- **Status: Fixed**
-- Evidence:
-  - Invalid inheritance/null-cast patterns replaced with MockK mocks:
-    - `repo/app/src/test/java/com/nutriops/app/domain/usecase/rules/EvaluateRuleUseCaseTest.kt:4`, `14`
-    - `repo/app/src/test/java/com/nutriops/app/domain/usecase/profile/ManageProfileUseCaseTest.kt:6`, `11-13`
-  - Added authorization integration tests: `repo/app/src/test/java/com/nutriops/app/domain/usecase/AuthorizationIntegrationTest.kt:21-184`.
+### 5) Medium - Authorization tests did not cover identified object-level gaps
+- Prior status: Partial Fail
+- Current status: **Fixed**
+- Verification:
+  - New cross-user denial tests added for:
+    - learning-plan transition/duplication: `repo/app/src/test/java/com/nutriops/app/domain/usecase/AuthorizationIntegrationTest.kt:190-223`
+    - ticket evidence upload: `repo/app/src/test/java/com/nutriops/app/domain/usecase/AuthorizationIntegrationTest.kt:225-243`
+    - messaging read/mark operations: `repo/app/src/test/java/com/nutriops/app/domain/usecase/AuthorizationIntegrationTest.kt:245-279`
 
-### 7) Medium - Rule evaluation worker exists but not scheduled
-- **Status: Fixed**
-- Evidence:
-  - Rule worker scheduled periodically: `repo/app/src/main/java/com/nutriops/app/NutriOpsApplication.kt:71-80`.
+### 6) Low - README prioritized Docker for verification
+- Prior status: Minor documentation friction
+- Current status: **Fixed**
+- Verification:
+  - Static audit note added at top with non-Docker primary verification path: `repo/README.md:5-16`
 
-### 8) Medium - Config docs claim env-based config but runtime didn’t load
-- **Status: Fixed**
-- Evidence:
-  - Runtime config initialization now loads env + manifest metadata: `repo/app/src/main/java/com/nutriops/app/config/AppConfig.kt:93-101`, `103-118`, `120-135`.
-
-### 9) Medium - Preferred meal times not user-configurable
-- **Status: Fixed**
-- Evidence:
-  - UI now collects selected meal times: `repo/app/src/main/java/com/nutriops/app/ui/enduser/UserProfileScreen.kt:99`, `167-181`.
-  - Save flow now passes selected meal times: `repo/app/src/main/java/com/nutriops/app/ui/enduser/UserProfileScreen.kt:73`, `77-80`.
-
-### 10) Medium - Lexicographic date comparison
-- **Status: Fixed**
-- Evidence:
-  - Use-case date parsing via `LocalDate.parse`: `repo/app/src/main/java/com/nutriops/app/domain/usecase/learningplan/ManageLearningPlanUseCase.kt:43-44`.
-  - Repository parsing applied in learning/config modules: 
-    - `repo/app/src/main/java/com/nutriops/app/data/repository/LearningPlanRepository.kt:37-38`
-    - `repo/app/src/main/java/com/nutriops/app/data/repository/ConfigRepository.kt:153-154`.
-
-## Additional Note
-- Evidence upload UI is now present for **text evidence** in both Agent and End User ticket flows:
-  - `repo/app/src/main/java/com/nutriops/app/ui/agent/AgentScreens.kt:302`, `332-359`
-  - `repo/app/src/main/java/com/nutriops/app/ui/enduser/UserTicketsScreen.kt:144-145`, `198-224`
-- Image evidence methods exist in viewmodels (`addImageEvidence`) but no clear image-picker wiring found in current UI; this is why image handling remains only partially complete from static evidence.
+## Conclusion
+All issues listed in `.tmp/audit-report-2.md` are fixed based on current static code evidence.
