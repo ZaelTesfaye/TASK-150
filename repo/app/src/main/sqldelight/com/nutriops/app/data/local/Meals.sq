@@ -1,0 +1,49 @@
+CREATE TABLE Meals (
+    id TEXT NOT NULL PRIMARY KEY,
+    mealPlanId TEXT NOT NULL REFERENCES MealPlans(id),
+    dayOfWeek INTEGER NOT NULL CHECK(dayOfWeek BETWEEN 1 AND 7),
+    mealTime TEXT NOT NULL CHECK(mealTime IN ('BREAKFAST', 'MORNING_SNACK', 'LUNCH', 'AFTERNOON_SNACK', 'DINNER', 'EVENING_SNACK')),
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    calories INTEGER NOT NULL CHECK(calories > 0),
+    proteinGrams REAL NOT NULL CHECK(proteinGrams >= 0),
+    carbGrams REAL NOT NULL CHECK(carbGrams >= 0),
+    fatGrams REAL NOT NULL CHECK(fatGrams >= 0),
+    reasons TEXT NOT NULL DEFAULT '[]',
+    isSwapped INTEGER NOT NULL DEFAULT 0,
+    originalMealId TEXT,
+    createdAt TEXT NOT NULL
+);
+
+CREATE INDEX idx_meals_mealPlanId ON Meals(mealPlanId);
+CREATE INDEX idx_meals_mealPlanId_day ON Meals(mealPlanId, dayOfWeek);
+
+insertMeal:
+INSERT INTO Meals(id, mealPlanId, dayOfWeek, mealTime, name, description, calories, proteinGrams, carbGrams, fatGrams, reasons, isSwapped, originalMealId, createdAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getMealById:
+SELECT * FROM Meals WHERE id = ?;
+
+getMealsByPlanId:
+SELECT * FROM Meals WHERE mealPlanId = ? ORDER BY dayOfWeek, mealTime;
+
+getMealsByPlanAndDay:
+SELECT * FROM Meals WHERE mealPlanId = ? AND dayOfWeek = ? ORDER BY mealTime;
+
+getDailyCalories:
+SELECT SUM(calories) AS totalCalories FROM Meals WHERE mealPlanId = ? AND dayOfWeek = ?;
+
+getDailyMacros:
+SELECT SUM(proteinGrams) AS totalProtein, SUM(carbGrams) AS totalCarbs, SUM(fatGrams) AS totalFat
+FROM Meals WHERE mealPlanId = ? AND dayOfWeek = ?;
+
+updateMeal:
+UPDATE Meals SET name = ?, description = ?, calories = ?, proteinGrams = ?, carbGrams = ?, fatGrams = ?, reasons = ?, isSwapped = ?, originalMealId = ?
+WHERE id = ?;
+
+deleteMealsByPlanId:
+DELETE FROM Meals WHERE mealPlanId = ?;
+
+deleteMeal:
+DELETE FROM Meals WHERE id = ?;

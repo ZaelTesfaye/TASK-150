@@ -1,0 +1,34 @@
+CREATE TABLE Profiles (
+    id TEXT NOT NULL PRIMARY KEY,
+    userId TEXT NOT NULL UNIQUE REFERENCES Users(id),
+    ageRange TEXT NOT NULL CHECK(ageRange IN ('18-25', '26-35', '36-45', '46-55', '56-65', '65+')),
+    dietaryPattern TEXT NOT NULL CHECK(dietaryPattern IN ('STANDARD', 'VEGETARIAN', 'VEGAN', 'KETO', 'PALEO', 'MEDITERRANEAN', 'LOW_SODIUM', 'GLUTEN_FREE')),
+    allergies TEXT NOT NULL DEFAULT '[]',
+    goal TEXT NOT NULL CHECK(goal IN ('LOSE_HALF_LB_WEEK', 'LOSE_1_LB_WEEK', 'LOSE_2_LB_WEEK', 'MAINTAIN', 'GAIN_HALF_LB_WEEK', 'GAIN_1_LB_WEEK')),
+    preferredMealTimes TEXT NOT NULL DEFAULT '[]',
+    dailyCalorieBudget INTEGER NOT NULL,
+    proteinTargetGrams INTEGER NOT NULL,
+    carbTargetGrams INTEGER NOT NULL,
+    fatTargetGrams INTEGER NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+);
+
+CREATE INDEX idx_profiles_userId ON Profiles(userId);
+
+insertProfile:
+INSERT INTO Profiles(id, userId, ageRange, dietaryPattern, allergies, goal, preferredMealTimes, dailyCalorieBudget, proteinTargetGrams, carbTargetGrams, fatTargetGrams, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getProfileById:
+SELECT * FROM Profiles WHERE id = ?;
+
+getProfileByUserId:
+SELECT * FROM Profiles WHERE userId = ?;
+
+updateProfile:
+UPDATE Profiles SET ageRange = ?, dietaryPattern = ?, allergies = ?, goal = ?, preferredMealTimes = ?, dailyCalorieBudget = ?, proteinTargetGrams = ?, carbTargetGrams = ?, fatTargetGrams = ?, updatedAt = ?
+WHERE id = ?;
+
+deleteProfile:
+DELETE FROM Profiles WHERE id = ?;

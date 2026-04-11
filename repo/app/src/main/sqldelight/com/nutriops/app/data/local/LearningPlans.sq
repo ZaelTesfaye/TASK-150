@@ -1,0 +1,40 @@
+CREATE TABLE LearningPlans (
+    id TEXT NOT NULL PRIMARY KEY,
+    userId TEXT NOT NULL REFERENCES Users(id),
+    title TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    startDate TEXT NOT NULL,
+    endDate TEXT NOT NULL,
+    frequencyPerWeek INTEGER NOT NULL CHECK(frequencyPerWeek BETWEEN 1 AND 7),
+    status TEXT NOT NULL DEFAULT 'NOT_STARTED' CHECK(status IN ('NOT_STARTED', 'IN_PROGRESS', 'PAUSED', 'COMPLETED', 'ARCHIVED')),
+    parentPlanId TEXT,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    CHECK(endDate >= startDate)
+);
+
+CREATE INDEX idx_learningplans_userId ON LearningPlans(userId);
+CREATE INDEX idx_learningplans_status ON LearningPlans(userId, status);
+
+insertLearningPlan:
+INSERT INTO LearningPlans(id, userId, title, description, startDate, endDate, frequencyPerWeek, status, parentPlanId, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getLearningPlanById:
+SELECT * FROM LearningPlans WHERE id = ?;
+
+getLearningPlansByUserId:
+SELECT * FROM LearningPlans WHERE userId = ? ORDER BY createdAt DESC;
+
+getLearningPlansByStatus:
+SELECT * FROM LearningPlans WHERE userId = ? AND status = ? ORDER BY updatedAt DESC;
+
+updateLearningPlanStatus:
+UPDATE LearningPlans SET status = ?, updatedAt = ? WHERE id = ?;
+
+updateLearningPlan:
+UPDATE LearningPlans SET title = ?, description = ?, startDate = ?, endDate = ?, frequencyPerWeek = ?, status = ?, updatedAt = ?
+WHERE id = ?;
+
+deleteLearningPlan:
+DELETE FROM LearningPlans WHERE id = ?;

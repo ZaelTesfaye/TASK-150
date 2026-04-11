@@ -1,0 +1,65 @@
+CREATE TABLE Orders (
+    id TEXT NOT NULL PRIMARY KEY,
+    userId TEXT NOT NULL REFERENCES Users(id),
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK(status IN ('PENDING', 'CONFIRMED', 'PROCESSING', 'COMPLETED', 'CANCELLED', 'REFUNDED')),
+    totalAmount TEXT NOT NULL,
+    reconciliationState TEXT NOT NULL DEFAULT 'UNRECONCILED' CHECK(reconciliationState IN ('UNRECONCILED', 'RECONCILED', 'DISPUTED', 'ADJUSTED')),
+    actorId TEXT NOT NULL REFERENCES Users(id),
+    notes TEXT NOT NULL DEFAULT '',
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+);
+
+CREATE TABLE ChargingSessions (
+    id TEXT NOT NULL PRIMARY KEY,
+    userId TEXT NOT NULL REFERENCES Users(id),
+    orderId TEXT REFERENCES Orders(id),
+    status TEXT NOT NULL DEFAULT 'INITIATED' CHECK(status IN ('INITIATED', 'AUTHORIZED', 'CAPTURED', 'FAILED', 'REFUNDED')),
+    amount TEXT NOT NULL,
+    actorId TEXT NOT NULL REFERENCES Users(id),
+    metadata TEXT NOT NULL DEFAULT '{}',
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+);
+
+CREATE INDEX idx_orders_userId ON Orders(userId);
+CREATE INDEX idx_orders_status ON Orders(status, updatedAt);
+CREATE INDEX idx_orders_reconciliation ON Orders(reconciliationState);
+CREATE INDEX idx_charging_userId ON ChargingSessions(userId);
+CREATE INDEX idx_charging_orderId ON ChargingSessions(orderId);
+CREATE INDEX idx_charging_status ON ChargingSessions(status);
+
+insertOrder:
+INSERT INTO Orders(id, userId, status, totalAmount, reconciliationState, actorId, notes, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getOrderById:
+SELECT * FROM Orders WHERE id = ?;
+
+getOrdersByUserId:
+SELECT * FROM Orders WHERE userId = ? ORDER BY createdAt DESC;
+
+getOrdersByStatus:
+SELECT * FROM Orders WHERE status = ? ORDER BY updatedAt DESC;
+
+getUnreconciledOrders:
+SELECT * FROM Orders WHERE reconciliationState = 'UNRECONCILED' ORDER BY createdAt ASC;
+
+updateOrderStatus:
+UPDATE Orders SET status = ?, actorId = ?, updatedAt = ? WHERE id = ?;
+
+updateOrderReconciliation:
+UPDATE Orders SET reconciliationState = ?, actorId = ?, notes = ?, updatedAt = ? WHERE id = ?;
+
+insertChargingSession:
+INSERT INTO ChargingSessions(id, userId, orderId, status, amount, actorId, metadata, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getChargingSessionById:
+SELECT * FROM ChargingSessions WHERE id = ?;
+
+getChargingSessionsByOrderId:
+SELECT * FROM ChargingSessions WHERE orderId = ? ORDER BY createdAt DESC;
+
+updateChargingSessionStatus:
+UPDATE ChargingSessions SET status = ?, actorId = ?, updatedAt = ? WHERE id = ?;

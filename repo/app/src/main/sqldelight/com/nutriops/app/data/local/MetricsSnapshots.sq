@@ -1,0 +1,39 @@
+CREATE TABLE MetricsSnapshots (
+    id TEXT NOT NULL PRIMARY KEY,
+    userId TEXT NOT NULL REFERENCES Users(id),
+    ruleId TEXT REFERENCES Rules(id),
+    metricType TEXT NOT NULL,
+    metricValue REAL NOT NULL,
+    snapshotDate TEXT NOT NULL,
+    metadata TEXT NOT NULL DEFAULT '{}',
+    createdAt TEXT NOT NULL
+);
+
+CREATE INDEX idx_metrics_userId_date ON MetricsSnapshots(userId, snapshotDate);
+CREATE INDEX idx_metrics_ruleId ON MetricsSnapshots(ruleId, snapshotDate);
+CREATE INDEX idx_metrics_type_date ON MetricsSnapshots(metricType, snapshotDate);
+
+insertMetricsSnapshot:
+INSERT INTO MetricsSnapshots(id, userId, ruleId, metricType, metricValue, snapshotDate, metadata, createdAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+getSnapshotById:
+SELECT * FROM MetricsSnapshots WHERE id = ?;
+
+getSnapshotsByUser:
+SELECT * FROM MetricsSnapshots WHERE userId = ? ORDER BY snapshotDate DESC;
+
+getSnapshotsByUserAndDateRange:
+SELECT * FROM MetricsSnapshots WHERE userId = ? AND snapshotDate >= ? AND snapshotDate <= ? ORDER BY snapshotDate;
+
+getSnapshotsByRule:
+SELECT * FROM MetricsSnapshots WHERE ruleId = ? ORDER BY snapshotDate DESC;
+
+getSnapshotsByRuleAndDateRange:
+SELECT * FROM MetricsSnapshots WHERE ruleId = ? AND snapshotDate >= ? AND snapshotDate <= ? ORDER BY snapshotDate;
+
+getSnapshotsByType:
+SELECT * FROM MetricsSnapshots WHERE metricType = ? AND snapshotDate >= ? AND snapshotDate <= ? ORDER BY snapshotDate;
+
+getLatestSnapshotForUserAndRule:
+SELECT * FROM MetricsSnapshots WHERE userId = ? AND ruleId = ? ORDER BY snapshotDate DESC LIMIT 1;

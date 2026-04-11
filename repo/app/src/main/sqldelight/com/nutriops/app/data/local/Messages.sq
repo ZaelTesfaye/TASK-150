@@ -1,0 +1,139 @@
+CREATE TABLE MessageTemplates (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    titleTemplate TEXT NOT NULL,
+    bodyTemplate TEXT NOT NULL,
+    variablesJson TEXT NOT NULL DEFAULT '[]',
+    triggerEvent TEXT NOT NULL,
+    isActive INTEGER NOT NULL DEFAULT 1,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+);
+
+CREATE TABLE Messages (
+    id TEXT NOT NULL PRIMARY KEY,
+    userId TEXT NOT NULL REFERENCES Users(id),
+    templateId TEXT REFERENCES MessageTemplates(id),
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    messageType TEXT NOT NULL DEFAULT 'NOTIFICATION' CHECK(messageType IN ('NOTIFICATION', 'REMINDER', 'ALERT', 'TODO')),
+    triggerEvent TEXT NOT NULL DEFAULT '',
+    isRead INTEGER NOT NULL DEFAULT 0,
+    createdAt TEXT NOT NULL
+);
+
+CREATE TABLE Reminders (
+    id TEXT NOT NULL PRIMARY KEY,
+    userId TEXT NOT NULL REFERENCES Users(id),
+    messageId TEXT REFERENCES Messages(id),
+    title TEXT NOT NULL,
+    scheduledAt TEXT NOT NULL,
+    deliveredAt TEXT,
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK(status IN ('PENDING', 'DELIVERED', 'SKIPPED_QUIET_HOURS', 'SKIPPED_CAP_REACHED', 'CANCELLED')),
+    createdAt TEXT NOT NULL
+);
+
+CREATE TABLE TodoItems (
+    id TEXT NOT NULL PRIMARY KEY,
+    userId TEXT NOT NULL REFERENCES Users(id),
+    title TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    isCompleted INTEGER NOT NULL DEFAULT 0,
+    dueDate TEXT,
+    relatedEntityType TEXT,
+    relatedEntityId TEXT,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+);
+
+CREATE INDEX idx_messages_userId ON Messages(userId);
+CREATE INDEX idx_messages_read ON Messages(userId, isRead);
+CREATE INDEX idx_messages_trigger ON Messages(triggerEvent);
+CREATE INDEX idx_reminders_userId ON Reminders(userId);
+CREATE INDEX idx_reminders_scheduled ON Reminders(scheduledAt, status);
+CREATE INDEX idx_reminders_userId_date ON Reminders(userId, scheduledAt);
+CREATE INDEX idx_todos_userId ON TodoItems(userId);
+CREATE INDEX idx_todos_completed ON TodoItems(userId, isCompleted);
+CREATE INDEX idx_templates_trigger ON MessageTemplates(triggerEvent);
+
+-- MessageTemplates queries
+insertMessageTemplate:
+INSERT INTO MessageTemplates(id, name, titleTemplate, bodyTemplate, variablesJson, triggerEvent, isActive, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getTemplateById:
+SELECT * FROM MessageTemplates WHERE id = ?;
+
+getTemplateByTrigger:
+SELECT * FROM MessageTemplates WHERE triggerEvent = ? AND isActive = 1;
+
+getAllTemplates:
+SELECT * FROM MessageTemplates WHERE isActive = 1 ORDER BY name;
+
+updateTemplate:
+UPDATE MessageTemplates SET name = ?, titleTemplate = ?, bodyTemplate = ?, variablesJson = ?, triggerEvent = ?, isActive = ?, updatedAt = ?
+WHERE id = ?;
+
+-- Messages queries
+insertMessage:
+INSERT INTO Messages(id, userId, templateId, title, body, messageType, triggerEvent, isRead, createdAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getMessageById:
+SELECT * FROM Messages WHERE id = ?;
+
+getMessagesByUserId:
+SELECT * FROM Messages WHERE userId = ? ORDER BY createdAt DESC;
+
+getUnreadMessagesByUserId:
+SELECT * FROM Messages WHERE userId = ? AND isRead = 0 ORDER BY createdAt DESC;
+
+getUnreadMessageCount:
+SELECT COUNT(*) FROM Messages WHERE userId = ? AND isRead = 0;
+
+markMessageAsRead:
+UPDATE Messages SET isRead = 1 WHERE id = ?;
+
+markAllMessagesAsRead:
+UPDATE Messages SET isRead = 1 WHERE userId = ? AND isRead = 0;
+
+-- Reminders queries
+insertReminder:
+INSERT INTO Reminders(id, userId, messageId, title, scheduledAt, deliveredAt, status, createdAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+getReminderById:
+SELECT * FROM Reminders WHERE id = ?;
+
+getPendingReminders:
+SELECT * FROM Reminders WHERE status = 'PENDING' AND scheduledAt <= ? ORDER BY scheduledAt ASC;
+
+getRemindersByUserId:
+SELECT * FROM Reminders WHERE userId = ? ORDER BY scheduledAt DESC;
+
+getDeliveredRemindersToday:
+SELECT COUNT(*) FROM Reminders WHERE userId = ? AND status = 'DELIVERED' AND deliveredAt >= ? AND deliveredAt < ?;
+
+updateReminderStatus:
+UPDATE Reminders SET status = ?, deliveredAt = ? WHERE id = ?;
+
+-- TodoItems queries
+insertTodoItem:
+INSERT INTO TodoItems(id, userId, title, description, isCompleted, dueDate, relatedEntityType, relatedEntityId, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getTodoById:
+SELECT * FROM TodoItems WHERE id = ?;
+
+getTodosByUserId:
+SELECT * FROM TodoItems WHERE userId = ? ORDER BY isCompleted ASC, dueDate ASC;
+
+getIncompleteTodosByUserId:
+SELECT * FROM TodoItems WHERE userId = ? AND isCompleted = 0 ORDER BY dueDate ASC;
+
+updateTodoCompletion:
+UPDATE TodoItems SET isCompleted = ?, updatedAt = ? WHERE id = ?;
+
+updateTodoItem:
+UPDATE TodoItems SET title = ?, description = ?, dueDate = ?, updatedAt = ?
+WHERE id = ?;

@@ -1,0 +1,34 @@
+# version: "3.8"
+
+services:
+  nutriops:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nutriops-app
+    environment:
+      - "GRADLE_OPTS=-Xmx1536m -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8"
+      - ANDROID_SDK_ROOT=/opt/android-sdk
+      - ENABLE_TLS=false
+      - DB_ENCRYPTION_KEY=local-dev-key-not-for-production
+      - LOG_LEVEL=DEBUG
+      - LOG_REDACTION_ENABLED=true
+      - AUDIT_APPEND_ONLY=true
+      - MAX_LOGIN_ATTEMPTS=5
+      - LOCKOUT_DURATION_MINUTES=30
+      - SLA_FIRST_RESPONSE_HOURS=4
+      - SLA_RESOLUTION_DAYS=3
+      - QUIET_HOURS_START=21:00
+      - QUIET_HOURS_END=07:00
+      - MAX_REMINDERS_PER_DAY=3
+      - CANARY_PERCENTAGE=10
+      - IMAGE_LRU_CACHE_MB=20
+      - COMPENSATION_AUTO_APPROVE_MAX=10
+    volumes:
+      - gradle-cache:/root/.gradle
+      - ./app/build/reports:/app/app/build/reports
+    command: ["gradle", ":app:testDebugUnitTest", "--no-daemon", "--no-parallel", "-Dorg.gradle.workers.max=2"]
+
+volumes:
+  gradle-cache:
+    driver: local

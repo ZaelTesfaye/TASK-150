@@ -1,0 +1,35 @@
+CREATE TABLE SwapMappings (
+    id TEXT NOT NULL PRIMARY KEY,
+    originalMealId TEXT NOT NULL REFERENCES Meals(id),
+    swapMealName TEXT NOT NULL,
+    swapDescription TEXT NOT NULL DEFAULT '',
+    swapCalories INTEGER NOT NULL CHECK(swapCalories > 0),
+    swapProteinGrams REAL NOT NULL CHECK(swapProteinGrams >= 0),
+    swapCarbGrams REAL NOT NULL CHECK(swapCarbGrams >= 0),
+    swapFatGrams REAL NOT NULL CHECK(swapFatGrams >= 0),
+    caloriesDiffPercent REAL NOT NULL,
+    proteinDiffGrams REAL NOT NULL,
+    isWithinTolerance INTEGER NOT NULL DEFAULT 1,
+    swapReasons TEXT NOT NULL DEFAULT '[]',
+    rankScore REAL NOT NULL DEFAULT 0.0,
+    createdAt TEXT NOT NULL
+);
+
+CREATE INDEX idx_swapmappings_originalMealId ON SwapMappings(originalMealId);
+CREATE INDEX idx_swapmappings_tolerance ON SwapMappings(originalMealId, isWithinTolerance);
+
+insertSwapMapping:
+INSERT INTO SwapMappings(id, originalMealId, swapMealName, swapDescription, swapCalories, swapProteinGrams, swapCarbGrams, swapFatGrams, caloriesDiffPercent, proteinDiffGrams, isWithinTolerance, swapReasons, rankScore, createdAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getSwapsByOriginalMealId:
+SELECT * FROM SwapMappings WHERE originalMealId = ? AND isWithinTolerance = 1 ORDER BY rankScore DESC;
+
+getAllSwapsForMeal:
+SELECT * FROM SwapMappings WHERE originalMealId = ? ORDER BY rankScore DESC;
+
+getSwapById:
+SELECT * FROM SwapMappings WHERE id = ?;
+
+deleteSwapsByOriginalMealId:
+DELETE FROM SwapMappings WHERE originalMealId = ?;

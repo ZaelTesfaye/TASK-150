@@ -1,0 +1,227 @@
+CREATE TABLE Configs (
+    id TEXT NOT NULL PRIMARY KEY,
+    configKey TEXT NOT NULL,
+    configValue TEXT NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1,
+    isActive INTEGER NOT NULL DEFAULT 1,
+    createdBy TEXT NOT NULL REFERENCES Users(id),
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+);
+
+CREATE TABLE ConfigVersions (
+    id TEXT NOT NULL PRIMARY KEY,
+    configId TEXT NOT NULL REFERENCES Configs(id),
+    version INTEGER NOT NULL,
+    configValue TEXT NOT NULL,
+    createdBy TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    UNIQUE(configId, version)
+);
+
+CREATE TABLE HomepageModules (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    moduleType TEXT NOT NULL,
+    position INTEGER NOT NULL,
+    isActive INTEGER NOT NULL DEFAULT 1,
+    configVersionId TEXT,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+);
+
+CREATE TABLE AdSlots (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    position TEXT NOT NULL,
+    content TEXT NOT NULL DEFAULT '',
+    isActive INTEGER NOT NULL DEFAULT 1,
+    configVersionId TEXT,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+);
+
+CREATE TABLE Campaigns (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    landingTopic TEXT NOT NULL DEFAULT '',
+    startDate TEXT NOT NULL,
+    endDate TEXT NOT NULL,
+    isActive INTEGER NOT NULL DEFAULT 1,
+    configVersionId TEXT,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    CHECK(endDate >= startDate)
+);
+
+CREATE TABLE Coupons (
+    id TEXT NOT NULL PRIMARY KEY,
+    code TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL DEFAULT '',
+    discountType TEXT NOT NULL CHECK(discountType IN ('FIXED', 'PERCENTAGE')),
+    discountValue REAL NOT NULL CHECK(discountValue > 0),
+    conditionsJson TEXT NOT NULL DEFAULT '{}',
+    maxUsesPerUser INTEGER NOT NULL DEFAULT 2,
+    periodDays INTEGER NOT NULL DEFAULT 30,
+    isActive INTEGER NOT NULL DEFAULT 1,
+    configVersionId TEXT,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+);
+
+CREATE TABLE CouponUsages (
+    id TEXT NOT NULL PRIMARY KEY,
+    couponId TEXT NOT NULL REFERENCES Coupons(id),
+    userId TEXT NOT NULL REFERENCES Users(id),
+    usedAt TEXT NOT NULL
+);
+
+CREATE TABLE BlackWhiteList (
+    id TEXT NOT NULL PRIMARY KEY,
+    listType TEXT NOT NULL CHECK(listType IN ('BLACK', 'WHITE')),
+    entityType TEXT NOT NULL,
+    entityValue TEXT NOT NULL,
+    reason TEXT NOT NULL DEFAULT '',
+    isActive INTEGER NOT NULL DEFAULT 1,
+    createdBy TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+);
+
+CREATE TABLE PurchaseLimits (
+    id TEXT NOT NULL PRIMARY KEY,
+    entityType TEXT NOT NULL,
+    maxQuantity INTEGER NOT NULL CHECK(maxQuantity > 0),
+    periodDays INTEGER NOT NULL CHECK(periodDays > 0),
+    isActive INTEGER NOT NULL DEFAULT 1,
+    createdBy TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+);
+
+CREATE INDEX idx_configs_key ON Configs(configKey);
+CREATE INDEX idx_configversions_configId ON ConfigVersions(configId, version);
+CREATE INDEX idx_homepage_position ON HomepageModules(position);
+CREATE INDEX idx_coupons_code ON Coupons(code);
+CREATE INDEX idx_couponusages_user ON CouponUsages(couponId, userId);
+CREATE INDEX idx_blackwhitelist_type ON BlackWhiteList(listType, entityType);
+CREATE INDEX idx_purchaselimits_entity ON PurchaseLimits(entityType);
+
+-- Config queries
+insertConfig:
+INSERT INTO Configs(id, configKey, configValue, version, isActive, createdBy, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+insertConfigVersion:
+INSERT INTO ConfigVersions(id, configId, version, configValue, createdBy, createdAt)
+VALUES (?, ?, ?, ?, ?, ?);
+
+getConfigById:
+SELECT * FROM Configs WHERE id = ?;
+
+getConfigByKey:
+SELECT * FROM Configs WHERE configKey = ? AND isActive = 1;
+
+getAllConfigs:
+SELECT * FROM Configs WHERE isActive = 1 ORDER BY configKey;
+
+getConfigVersions:
+SELECT * FROM ConfigVersions WHERE configId = ? ORDER BY version DESC;
+
+updateConfig:
+UPDATE Configs SET configValue = ?, version = ?, isActive = ?, updatedAt = ?
+WHERE id = ?;
+
+-- HomepageModules queries
+insertHomepageModule:
+INSERT INTO HomepageModules(id, name, moduleType, position, isActive, configVersionId, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+getAllHomepageModules:
+SELECT * FROM HomepageModules WHERE isActive = 1 ORDER BY position;
+
+updateHomepageModule:
+UPDATE HomepageModules SET name = ?, moduleType = ?, position = ?, isActive = ?, configVersionId = ?, updatedAt = ?
+WHERE id = ?;
+
+-- AdSlots queries
+insertAdSlot:
+INSERT INTO AdSlots(id, name, position, content, isActive, configVersionId, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+getAllAdSlots:
+SELECT * FROM AdSlots WHERE isActive = 1 ORDER BY position;
+
+updateAdSlot:
+UPDATE AdSlots SET name = ?, position = ?, content = ?, isActive = ?, configVersionId = ?, updatedAt = ?
+WHERE id = ?;
+
+-- Campaigns queries
+insertCampaign:
+INSERT INTO Campaigns(id, name, description, landingTopic, startDate, endDate, isActive, configVersionId, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getAllCampaigns:
+SELECT * FROM Campaigns WHERE isActive = 1 ORDER BY startDate DESC;
+
+updateCampaign:
+UPDATE Campaigns SET name = ?, description = ?, landingTopic = ?, startDate = ?, endDate = ?, isActive = ?, configVersionId = ?, updatedAt = ?
+WHERE id = ?;
+
+-- Coupons queries
+insertCoupon:
+INSERT INTO Coupons(id, code, description, discountType, discountValue, conditionsJson, maxUsesPerUser, periodDays, isActive, configVersionId, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getCouponById:
+SELECT * FROM Coupons WHERE id = ?;
+
+getCouponByCode:
+SELECT * FROM Coupons WHERE code = ? AND isActive = 1;
+
+getAllCoupons:
+SELECT * FROM Coupons WHERE isActive = 1 ORDER BY createdAt DESC;
+
+updateCoupon:
+UPDATE Coupons SET description = ?, discountType = ?, discountValue = ?, conditionsJson = ?, maxUsesPerUser = ?, periodDays = ?, isActive = ?, configVersionId = ?, updatedAt = ?
+WHERE id = ?;
+
+-- CouponUsages queries
+insertCouponUsage:
+INSERT INTO CouponUsages(id, couponId, userId, usedAt) VALUES (?, ?, ?, ?);
+
+getCouponUsageCount:
+SELECT COUNT(*) FROM CouponUsages WHERE couponId = ? AND userId = ? AND usedAt >= ?;
+
+-- BlackWhiteList queries
+insertBlackWhiteListEntry:
+INSERT INTO BlackWhiteList(id, listType, entityType, entityValue, reason, isActive, createdBy, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getBlackWhiteList:
+SELECT * FROM BlackWhiteList WHERE listType = ? AND isActive = 1 ORDER BY createdAt DESC;
+
+isBlacklisted:
+SELECT COUNT(*) FROM BlackWhiteList WHERE listType = 'BLACK' AND entityType = ? AND entityValue = ? AND isActive = 1;
+
+isWhitelisted:
+SELECT COUNT(*) FROM BlackWhiteList WHERE listType = 'WHITE' AND entityType = ? AND entityValue = ? AND isActive = 1;
+
+updateBlackWhiteListEntry:
+UPDATE BlackWhiteList SET isActive = ?, reason = ?, updatedAt = ? WHERE id = ?;
+
+-- PurchaseLimits queries
+insertPurchaseLimit:
+INSERT INTO PurchaseLimits(id, entityType, maxQuantity, periodDays, isActive, createdBy, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+getPurchaseLimits:
+SELECT * FROM PurchaseLimits WHERE isActive = 1 ORDER BY entityType;
+
+getPurchaseLimitByType:
+SELECT * FROM PurchaseLimits WHERE entityType = ? AND isActive = 1;
+
+updatePurchaseLimit:
+UPDATE PurchaseLimits SET maxQuantity = ?, periodDays = ?, isActive = ?, updatedAt = ?
+WHERE id = ?;

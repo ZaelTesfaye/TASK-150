@@ -1,0 +1,71 @@
+CREATE TABLE Tickets (
+    id TEXT NOT NULL PRIMARY KEY,
+    userId TEXT NOT NULL REFERENCES Users(id),
+    agentId TEXT REFERENCES Users(id),
+    ticketType TEXT NOT NULL CHECK(ticketType IN ('DELAY', 'DISPUTE', 'LOST_ITEM')),
+    status TEXT NOT NULL DEFAULT 'OPEN' CHECK(status IN ('OPEN', 'ASSIGNED', 'IN_PROGRESS', 'AWAITING_EVIDENCE', 'RESOLVED', 'CLOSED', 'ESCALATED')),
+    priority TEXT NOT NULL DEFAULT 'MEDIUM' CHECK(priority IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),
+    subject TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    slaFirstResponseDue TEXT NOT NULL,
+    slaResolutionDue TEXT NOT NULL,
+    slaFirstResponseAt TEXT,
+    slaResolvedAt TEXT,
+    slaPausedAt TEXT,
+    slaTotalPauseDurationMinutes INTEGER NOT NULL DEFAULT 0,
+    compensationSuggestedAmount TEXT,
+    compensationApprovedAmount TEXT,
+    compensationApprovedBy TEXT,
+    compensationStatus TEXT DEFAULT 'NONE' CHECK(compensationStatus IN ('NONE', 'SUGGESTED', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED')),
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+);
+
+CREATE INDEX idx_tickets_userId ON Tickets(userId);
+CREATE INDEX idx_tickets_agentId ON Tickets(agentId);
+CREATE INDEX idx_tickets_status_updated ON Tickets(status, updatedAt);
+CREATE INDEX idx_tickets_sla ON Tickets(slaFirstResponseDue, slaResolutionDue);
+
+insertTicket:
+INSERT INTO Tickets(id, userId, agentId, ticketType, status, priority, subject, description, slaFirstResponseDue, slaResolutionDue, slaFirstResponseAt, slaResolvedAt, slaPausedAt, slaTotalPauseDurationMinutes, compensationSuggestedAmount, compensationApprovedAmount, compensationApprovedBy, compensationStatus, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getTicketById:
+SELECT * FROM Tickets WHERE id = ?;
+
+getTicketsByUserId:
+SELECT * FROM Tickets WHERE userId = ? ORDER BY createdAt DESC;
+
+getTicketsByAgentId:
+SELECT * FROM Tickets WHERE agentId = ? ORDER BY updatedAt DESC;
+
+getTicketsByStatus:
+SELECT * FROM Tickets WHERE status = ? ORDER BY updatedAt DESC;
+
+getOpenTickets:
+SELECT * FROM Tickets WHERE status NOT IN ('RESOLVED', 'CLOSED') ORDER BY priority DESC, createdAt ASC;
+
+getOverdueSlaTickets:
+SELECT * FROM Tickets WHERE status NOT IN ('RESOLVED', 'CLOSED') AND (slaFirstResponseDue < ? AND slaFirstResponseAt IS NULL) ORDER BY slaFirstResponseDue ASC;
+
+updateTicketStatus:
+UPDATE Tickets SET status = ?, updatedAt = ? WHERE id = ?;
+
+updateTicketAgent:
+UPDATE Tickets SET agentId = ?, status = 'ASSIGNED', updatedAt = ? WHERE id = ?;
+
+updateTicketSlaFirstResponse:
+UPDATE Tickets SET slaFirstResponseAt = ?, updatedAt = ? WHERE id = ?;
+
+updateTicketResolved:
+UPDATE Tickets SET status = 'RESOLVED', slaResolvedAt = ?, updatedAt = ? WHERE id = ?;
+
+updateTicketSlaPause:
+UPDATE Tickets SET slaPausedAt = ?, updatedAt = ? WHERE id = ?;
+
+updateTicketSlaResume:
+UPDATE Tickets SET slaPausedAt = NULL, slaTotalPauseDurationMinutes = ?, updatedAt = ? WHERE id = ?;
+
+updateTicketCompensation:
+UPDATE Tickets SET compensationSuggestedAmount = ?, compensationApprovedAmount = ?, compensationApprovedBy = ?, compensationStatus = ?, updatedAt = ?
+WHERE id = ?;

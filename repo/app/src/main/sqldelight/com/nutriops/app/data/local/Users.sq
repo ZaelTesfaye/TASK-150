@@ -1,0 +1,52 @@
+CREATE TABLE Users (
+    id TEXT NOT NULL PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    passwordHash TEXT NOT NULL,
+    role TEXT NOT NULL CHECK(role IN ('ADMINISTRATOR', 'AGENT', 'END_USER')),
+    isActive INTEGER NOT NULL DEFAULT 1,
+    isLocked INTEGER NOT NULL DEFAULT 0,
+    failedLoginAttempts INTEGER NOT NULL DEFAULT 0,
+    lockoutUntil TEXT,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+);
+
+CREATE INDEX idx_users_username ON Users(username);
+CREATE INDEX idx_users_role ON Users(role);
+
+insertUser:
+INSERT INTO Users(id, username, passwordHash, role, isActive, isLocked, failedLoginAttempts, lockoutUntil, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getUserById:
+SELECT * FROM Users WHERE id = ?;
+
+getUserByUsername:
+SELECT * FROM Users WHERE username = ?;
+
+getAllUsers:
+SELECT * FROM Users ORDER BY createdAt DESC;
+
+getUsersByRole:
+SELECT * FROM Users WHERE role = ? ORDER BY createdAt DESC;
+
+updateUser:
+UPDATE Users SET username = ?, passwordHash = ?, role = ?, isActive = ?, isLocked = ?, failedLoginAttempts = ?, lockoutUntil = ?, updatedAt = ?
+WHERE id = ?;
+
+updateLoginFailure:
+UPDATE Users SET failedLoginAttempts = ?, isLocked = ?, lockoutUntil = ?, updatedAt = ?
+WHERE id = ?;
+
+resetLoginAttempts:
+UPDATE Users SET failedLoginAttempts = 0, isLocked = 0, lockoutUntil = NULL, updatedAt = ?
+WHERE id = ?;
+
+countUsers:
+SELECT COUNT(*) FROM Users;
+
+countUsersByRole:
+SELECT COUNT(*) FROM Users WHERE role = ?;
+
+deleteUser:
+DELETE FROM Users WHERE id = ?;

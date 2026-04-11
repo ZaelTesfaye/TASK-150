@@ -1,0 +1,48 @@
+-- Append-only audit trail: NO UPDATE or DELETE queries permitted
+CREATE TABLE AuditEvents (
+    id TEXT NOT NULL PRIMARY KEY,
+    entityType TEXT NOT NULL,
+    entityId TEXT NOT NULL,
+    action TEXT NOT NULL,
+    actorId TEXT NOT NULL,
+    actorRole TEXT NOT NULL,
+    previousState TEXT,
+    newState TEXT,
+    details TEXT NOT NULL DEFAULT '{}',
+    ipAddress TEXT,
+    timestamp TEXT NOT NULL
+);
+
+CREATE INDEX idx_audit_entity ON AuditEvents(entityType, entityId);
+CREATE INDEX idx_audit_actor ON AuditEvents(actorId);
+CREATE INDEX idx_audit_timestamp ON AuditEvents(timestamp);
+CREATE INDEX idx_audit_action ON AuditEvents(action, timestamp);
+
+-- Only INSERT is allowed — no UPDATE or DELETE to enforce immutability
+insertAuditEvent:
+INSERT INTO AuditEvents(id, entityType, entityId, action, actorId, actorRole, previousState, newState, details, ipAddress, timestamp)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getAuditEventById:
+SELECT * FROM AuditEvents WHERE id = ?;
+
+getAuditEventsByEntity:
+SELECT * FROM AuditEvents WHERE entityType = ? AND entityId = ? ORDER BY timestamp DESC;
+
+getAuditEventsByActor:
+SELECT * FROM AuditEvents WHERE actorId = ? ORDER BY timestamp DESC;
+
+getAuditEventsByDateRange:
+SELECT * FROM AuditEvents WHERE timestamp >= ? AND timestamp <= ? ORDER BY timestamp DESC;
+
+getAuditEventsByAction:
+SELECT * FROM AuditEvents WHERE action = ? ORDER BY timestamp DESC;
+
+getAuditEventsByEntityAndAction:
+SELECT * FROM AuditEvents WHERE entityType = ? AND entityId = ? AND action = ? ORDER BY timestamp DESC;
+
+countAuditEvents:
+SELECT COUNT(*) FROM AuditEvents;
+
+getRecentAuditEvents:
+SELECT * FROM AuditEvents ORDER BY timestamp DESC LIMIT ?;

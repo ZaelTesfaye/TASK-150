@@ -1,0 +1,29 @@
+CREATE TABLE EvidenceItems (
+    id TEXT NOT NULL PRIMARY KEY,
+    ticketId TEXT NOT NULL REFERENCES Tickets(id),
+    evidenceType TEXT NOT NULL CHECK(evidenceType IN ('IMAGE', 'TEXT')),
+    contentUri TEXT,
+    textContent TEXT,
+    uploadedBy TEXT NOT NULL REFERENCES Users(id),
+    fileSizeBytes INTEGER,
+    createdAt TEXT NOT NULL
+);
+
+CREATE INDEX idx_evidence_ticketId ON EvidenceItems(ticketId);
+CREATE INDEX idx_evidence_uploadedBy ON EvidenceItems(uploadedBy);
+
+insertEvidenceItem:
+INSERT INTO EvidenceItems(id, ticketId, evidenceType, contentUri, textContent, uploadedBy, fileSizeBytes, createdAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+getEvidenceByTicketId:
+SELECT * FROM EvidenceItems WHERE ticketId = ? ORDER BY createdAt ASC;
+
+getEvidenceById:
+SELECT * FROM EvidenceItems WHERE id = ?;
+
+getEvidenceByUploader:
+SELECT * FROM EvidenceItems WHERE uploadedBy = ? ORDER BY createdAt DESC;
+
+countEvidenceByTicket:
+SELECT COUNT(*) FROM EvidenceItems WHERE ticketId = ?;

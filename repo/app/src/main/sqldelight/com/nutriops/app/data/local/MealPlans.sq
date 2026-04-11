@@ -1,0 +1,39 @@
+CREATE TABLE MealPlans (
+    id TEXT NOT NULL PRIMARY KEY,
+    userId TEXT NOT NULL REFERENCES Users(id),
+    weekStartDate TEXT NOT NULL,
+    weekEndDate TEXT NOT NULL,
+    dailyCalorieBudget INTEGER NOT NULL,
+    proteinTargetGrams INTEGER NOT NULL,
+    carbTargetGrams INTEGER NOT NULL,
+    fatTargetGrams INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE', 'COMPLETED', 'CANCELLED')),
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    CHECK(weekEndDate >= weekStartDate)
+);
+
+CREATE INDEX idx_mealplans_userId_date ON MealPlans(userId, weekStartDate);
+CREATE INDEX idx_mealplans_status ON MealPlans(status, updatedAt);
+
+insertMealPlan:
+INSERT INTO MealPlans(id, userId, weekStartDate, weekEndDate, dailyCalorieBudget, proteinTargetGrams, carbTargetGrams, fatTargetGrams, status, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getMealPlanById:
+SELECT * FROM MealPlans WHERE id = ?;
+
+getMealPlansByUserId:
+SELECT * FROM MealPlans WHERE userId = ? ORDER BY weekStartDate DESC;
+
+getActiveMealPlanForUser:
+SELECT * FROM MealPlans WHERE userId = ? AND status = 'ACTIVE' ORDER BY weekStartDate DESC LIMIT 1;
+
+getMealPlansByDateRange:
+SELECT * FROM MealPlans WHERE userId = ? AND weekStartDate >= ? AND weekEndDate <= ?;
+
+updateMealPlanStatus:
+UPDATE MealPlans SET status = ?, updatedAt = ? WHERE id = ?;
+
+deleteMealPlan:
+DELETE FROM MealPlans WHERE id = ?;
