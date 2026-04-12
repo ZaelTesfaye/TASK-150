@@ -1,4 +1,4 @@
-package com.nutriops.app.data.repository
+package com.nutriops.app.integration_tests.data.repository
 
 import com.google.common.truth.Truth.assertThat
 import com.nutriops.app.audit.AuditManager
@@ -7,6 +7,8 @@ import com.nutriops.app.data.local.Tickets
 import com.nutriops.app.data.local.TicketsQueries
 import com.nutriops.app.data.local.EvidenceItemsQueries
 import com.nutriops.app.data.local.OrdersQueries
+import com.nutriops.app.data.repository.TicketRepository
+import com.nutriops.app.data.repository.OrderRepository
 import com.nutriops.app.domain.model.*
 import com.nutriops.app.security.EncryptionManager
 import io.mockk.*

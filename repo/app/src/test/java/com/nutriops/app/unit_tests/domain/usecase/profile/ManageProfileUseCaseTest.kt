@@ -1,8 +1,9 @@
-package com.nutriops.app.domain.usecase.profile
+package com.nutriops.app.unit_tests.domain.usecase.profile
 
 import com.google.common.truth.Truth.assertThat
 import com.nutriops.app.domain.model.AgeRange
 import com.nutriops.app.domain.model.HealthGoal
+import com.nutriops.app.domain.usecase.profile.ManageProfileUseCase
 import io.mockk.mockk
 import org.junit.Test
 

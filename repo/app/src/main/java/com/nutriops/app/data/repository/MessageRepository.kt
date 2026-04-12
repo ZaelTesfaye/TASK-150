@@ -168,6 +168,10 @@ class MessageRepository @Inject constructor(
         msgQueries.getTodosByUserId(userId).executeAsList()
     }
 
+    suspend fun getTodoById(todoId: String) = withContext(Dispatchers.IO) {
+        msgQueries.getTodoById(todoId).executeAsOneOrNull()
+    }
+
     suspend fun getIncompleteTodos(userId: String) = withContext(Dispatchers.IO) {
         msgQueries.getIncompleteTodosByUserId(userId).executeAsList()
     }

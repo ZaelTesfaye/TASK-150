@@ -100,11 +100,32 @@ class ManageLearningPlanUseCase @Inject constructor(
         return learningPlanRepository.duplicatePlan(planId, actorId, actorRole)
     }
 
-    suspend fun getPlans(userId: String, actorId: String, actorRole: Role) =
-        learningPlanRepository.getLearningPlansByUserId(userId)
+    suspend fun getPlans(userId: String, actorId: String, actorRole: Role): List<com.nutriops.app.data.local.LearningPlans> {
+        if (actorRole == Role.END_USER) {
+            RbacManager.checkPermission(actorRole, RbacManager.Permission.VIEW_OWN_LEARNING_PLANS)
+                .getOrElse { return emptyList() }
+            RbacManager.checkObjectOwnership(actorId, userId, actorRole)
+                .getOrElse { return emptyList() }
+        } else {
+            RbacManager.checkPermission(actorRole, RbacManager.Permission.VIEW_ANY_LEARNING_PLANS)
+                .getOrElse { return emptyList() }
+        }
+        return learningPlanRepository.getLearningPlansByUserId(userId)
+    }
 
-    suspend fun getPlanById(planId: String) =
-        learningPlanRepository.getLearningPlanById(planId)
+    suspend fun getPlanById(planId: String, actorId: String, actorRole: Role): com.nutriops.app.data.local.LearningPlans? {
+        val plan = learningPlanRepository.getLearningPlanById(planId) ?: return null
+        if (actorRole == Role.END_USER) {
+            RbacManager.checkPermission(actorRole, RbacManager.Permission.VIEW_OWN_LEARNING_PLANS)
+                .getOrElse { return null }
+            RbacManager.checkObjectOwnership(actorId, plan.userId, actorRole)
+                .getOrElse { return null }
+        } else {
+            RbacManager.checkPermission(actorRole, RbacManager.Permission.VIEW_ANY_LEARNING_PLANS)
+                .getOrElse { return null }
+        }
+        return plan
+    }
 
     /**
      * Returns allowed transitions from the current status

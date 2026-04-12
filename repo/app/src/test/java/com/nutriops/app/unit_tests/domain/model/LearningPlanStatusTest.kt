@@ -1,6 +1,7 @@
-package com.nutriops.app.domain.model
+package com.nutriops.app.unit_tests.domain.model
 
 import com.google.common.truth.Truth.assertThat
+import com.nutriops.app.domain.model.LearningPlanStatus
 import org.junit.Test
 
 class LearningPlanStatusTest {

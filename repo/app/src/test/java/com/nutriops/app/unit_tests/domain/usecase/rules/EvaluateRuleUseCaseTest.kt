@@ -1,6 +1,7 @@
-package com.nutriops.app.domain.usecase.rules
+package com.nutriops.app.unit_tests.domain.usecase.rules
 
 import com.google.common.truth.Truth.assertThat
+import com.nutriops.app.domain.usecase.rules.EvaluateRuleUseCase
 import io.mockk.mockk
 import org.junit.Before
 import org.junit.Test
@@ -108,5 +109,4 @@ class EvaluateRuleUseCaseTest {
         val condition = useCase.parseCondition("not json")
         assertThat(condition.type).isEqualTo("metric")
     }
-
 }

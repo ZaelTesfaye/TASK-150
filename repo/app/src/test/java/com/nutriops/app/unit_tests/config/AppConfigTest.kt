@@ -1,6 +1,7 @@
-package com.nutriops.app.config
+package com.nutriops.app.unit_tests.config
 
 import com.google.common.truth.Truth.assertThat
+import com.nutriops.app.config.AppConfig
 import org.junit.After
 import org.junit.Test
 

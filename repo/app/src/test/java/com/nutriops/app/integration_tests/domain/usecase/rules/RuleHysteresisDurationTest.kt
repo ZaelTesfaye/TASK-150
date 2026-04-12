@@ -1,4 +1,4 @@
-package com.nutriops.app.domain.usecase.rules
+package com.nutriops.app.integration_tests.domain.usecase.rules
 
 import com.google.common.truth.Truth.assertThat
 import com.nutriops.app.data.local.MetricsSnapshots
@@ -7,6 +7,7 @@ import com.nutriops.app.data.local.RuleVersions
 import com.nutriops.app.data.local.Rules
 import com.nutriops.app.data.repository.RuleRepository
 import com.nutriops.app.domain.model.Role
+import com.nutriops.app.domain.usecase.rules.EvaluateRuleUseCase
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import org.junit.Before

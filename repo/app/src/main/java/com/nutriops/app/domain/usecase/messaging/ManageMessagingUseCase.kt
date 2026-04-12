@@ -128,12 +128,40 @@ class ManageMessagingUseCase @Inject constructor(
     // ── Todos ──
     suspend fun createTodo(
         userId: String, title: String, description: String,
-        dueDate: String?, relatedEntityType: String?, relatedEntityId: String?
-    ) = messageRepository.createTodo(userId, title, description, dueDate, relatedEntityType, relatedEntityId)
+        dueDate: String?, relatedEntityType: String?, relatedEntityId: String?,
+        actorId: String, actorRole: Role
+    ): Result<String> {
+        RbacManager.checkPermission(actorRole, RbacManager.Permission.VIEW_OWN_MESSAGES)
+            .getOrElse { return Result.failure(it) }
+        RbacManager.checkObjectOwnership(actorId, userId, actorRole)
+            .getOrElse { return Result.failure(it) }
+        return messageRepository.createTodo(userId, title, description, dueDate, relatedEntityType, relatedEntityId)
+    }
 
-    suspend fun completeTodo(todoId: String) = messageRepository.completeTodo(todoId)
-    suspend fun getTodos(userId: String) = messageRepository.getTodosByUserId(userId)
-    suspend fun getIncompleteTodos(userId: String) = messageRepository.getIncompleteTodos(userId)
+    suspend fun completeTodo(todoId: String, actorId: String, actorRole: Role) {
+        RbacManager.checkPermission(actorRole, RbacManager.Permission.VIEW_OWN_MESSAGES)
+            .getOrElse { return }
+        val todo = messageRepository.getTodoById(todoId) ?: return
+        RbacManager.checkObjectOwnership(actorId, todo.userId, actorRole)
+            .getOrElse { return }
+        messageRepository.completeTodo(todoId)
+    }
+
+    suspend fun getTodos(userId: String, actorId: String, actorRole: Role): List<com.nutriops.app.data.local.Todos> {
+        RbacManager.checkPermission(actorRole, RbacManager.Permission.VIEW_OWN_MESSAGES)
+            .getOrElse { return emptyList() }
+        RbacManager.checkObjectOwnership(actorId, userId, actorRole)
+            .getOrElse { return emptyList() }
+        return messageRepository.getTodosByUserId(userId)
+    }
+
+    suspend fun getIncompleteTodos(userId: String, actorId: String, actorRole: Role): List<com.nutriops.app.data.local.Todos> {
+        RbacManager.checkPermission(actorRole, RbacManager.Permission.VIEW_OWN_MESSAGES)
+            .getOrElse { return emptyList() }
+        RbacManager.checkObjectOwnership(actorId, userId, actorRole)
+            .getOrElse { return emptyList() }
+        return messageRepository.getIncompleteTodos(userId)
+    }
 
     // ── Templates ──
     suspend fun createTemplate(

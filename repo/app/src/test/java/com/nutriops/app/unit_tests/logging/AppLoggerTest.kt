@@ -1,7 +1,8 @@
-package com.nutriops.app.logging
+package com.nutriops.app.unit_tests.logging
 
 import com.google.common.truth.Truth.assertThat
 import com.nutriops.app.config.AppConfig
+import com.nutriops.app.logging.AppLogger
 import org.junit.After
 import org.junit.Before
 import org.junit.Test

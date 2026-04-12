@@ -1,4 +1,4 @@
-package com.nutriops.app.domain.usecase
+package com.nutriops.app.integration_tests.domain.usecase
 
 import com.google.common.truth.Truth.assertThat
 import com.nutriops.app.data.repository.*
@@ -276,5 +276,83 @@ class AuthorizationIntegrationTest {
             actorRole = Role.END_USER
         )
         io.mockk.coVerify(exactly = 0) { messageRepository.markAllAsRead("userB") }
+    }
+
+    // ── Cross-user todo authorization ──
+
+    @Test
+    fun `end user cannot read another users learning plans`() = runBlocking {
+        val result = manageLearningPlanUseCase.getPlans(
+            userId = "userB",
+            actorId = "userA",
+            actorRole = Role.END_USER
+        )
+        assertThat(result).isEmpty()
+    }
+
+    @Test
+    fun `end user cannot read another users learning plan by ID`() = runBlocking {
+        val otherPlan = mockk<com.nutriops.app.data.local.LearningPlans> {
+            io.mockk.every { userId } returns "userB"
+        }
+        coEvery { learningPlanRepository.getLearningPlanById("plan-B") } returns otherPlan
+
+        val result = manageLearningPlanUseCase.getPlanById(
+            planId = "plan-B",
+            actorId = "userA",
+            actorRole = Role.END_USER
+        )
+        assertThat(result).isNull()
+    }
+
+    @Test
+    fun `end user cannot get another users todos`() = runBlocking {
+        val result = manageMessagingUseCase.getTodos(
+            userId = "userB",
+            actorId = "userA",
+            actorRole = Role.END_USER
+        )
+        assertThat(result).isEmpty()
+    }
+
+    @Test
+    fun `end user cannot get another users incomplete todos`() = runBlocking {
+        val result = manageMessagingUseCase.getIncompleteTodos(
+            userId = "userB",
+            actorId = "userA",
+            actorRole = Role.END_USER
+        )
+        assertThat(result).isEmpty()
+    }
+
+    @Test
+    fun `end user cannot create todo for another user`() = runBlocking {
+        val result = manageMessagingUseCase.createTodo(
+            userId = "userB",
+            title = "Planted todo",
+            description = "desc",
+            dueDate = null,
+            relatedEntityType = null,
+            relatedEntityId = null,
+            actorId = "userA",
+            actorRole = Role.END_USER
+        )
+        assertThat(result.isFailure).isTrue()
+        assertThat(result.exceptionOrNull()).isInstanceOf(SecurityException::class.java)
+    }
+
+    @Test
+    fun `end user cannot complete another users todo`() = runBlocking {
+        val otherTodo = mockk<com.nutriops.app.data.local.Todos> {
+            io.mockk.every { userId } returns "userB"
+        }
+        coEvery { messageRepository.getTodoById("todo-B") } returns otherTodo
+
+        manageMessagingUseCase.completeTodo(
+            todoId = "todo-B",
+            actorId = "userA",
+            actorRole = Role.END_USER
+        )
+        io.mockk.coVerify(exactly = 0) { messageRepository.completeTodo("todo-B") }
     }
 }

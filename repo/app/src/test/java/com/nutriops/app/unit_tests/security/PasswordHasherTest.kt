@@ -1,6 +1,7 @@
-package com.nutriops.app.security
+package com.nutriops.app.unit_tests.security
 
 import com.google.common.truth.Truth.assertThat
+import com.nutriops.app.security.PasswordHasher
 import org.junit.Test
 
 class PasswordHasherTest {

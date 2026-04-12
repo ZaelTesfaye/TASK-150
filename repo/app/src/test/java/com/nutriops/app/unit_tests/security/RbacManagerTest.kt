@@ -1,7 +1,8 @@
-package com.nutriops.app.security
+package com.nutriops.app.unit_tests.security
 
 import com.google.common.truth.Truth.assertThat
 import com.nutriops.app.domain.model.Role
+import com.nutriops.app.security.RbacManager
 import org.junit.Test
 
 class RbacManagerTest {
