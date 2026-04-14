@@ -147,7 +147,7 @@ class ManageMessagingUseCase @Inject constructor(
         messageRepository.completeTodo(todoId)
     }
 
-    suspend fun getTodos(userId: String, actorId: String, actorRole: Role): List<com.nutriops.app.data.local.Todos> {
+    suspend fun getTodos(userId: String, actorId: String, actorRole: Role): List<com.nutriops.app.data.local.TodoItems> {
         RbacManager.checkPermission(actorRole, RbacManager.Permission.VIEW_OWN_MESSAGES)
             .getOrElse { return emptyList() }
         RbacManager.checkObjectOwnership(actorId, userId, actorRole)
@@ -155,7 +155,7 @@ class ManageMessagingUseCase @Inject constructor(
         return messageRepository.getTodosByUserId(userId)
     }
 
-    suspend fun getIncompleteTodos(userId: String, actorId: String, actorRole: Role): List<com.nutriops.app.data.local.Todos> {
+    suspend fun getIncompleteTodos(userId: String, actorId: String, actorRole: Role): List<com.nutriops.app.data.local.TodoItems> {
         RbacManager.checkPermission(actorRole, RbacManager.Permission.VIEW_OWN_MESSAGES)
             .getOrElse { return emptyList() }
         RbacManager.checkObjectOwnership(actorId, userId, actorRole)

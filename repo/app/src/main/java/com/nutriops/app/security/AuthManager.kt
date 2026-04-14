@@ -91,6 +91,53 @@ class AuthManager(
         return AuthResult.Success(session)
     }
 
+    /**
+     * Self-registration for End Users. Creates a new END_USER account and
+     * logs them in immediately. Agents cannot self-register (admin-created only).
+     */
+    fun register(username: String, password: String): AuthResult {
+        if (username.isBlank() || password.length < 8) {
+            return AuthResult.Failure("Username required and password must be at least 8 characters")
+        }
+
+        val existing = database.usersQueries.getUserByUsername(username).executeAsOneOrNull()
+        if (existing != null) {
+            return AuthResult.Failure("Username already taken")
+        }
+
+        val now = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        val userId = UUID.randomUUID().toString()
+        val hashedPassword = PasswordHasher.hash(password)
+
+        database.usersQueries.insertUser(
+            id = userId,
+            username = username,
+            passwordHash = hashedPassword,
+            role = Role.END_USER.name,
+            isActive = 1,
+            isLocked = 0,
+            failedLoginAttempts = 0,
+            lockoutUntil = null,
+            createdAt = now,
+            updatedAt = now
+        )
+
+        auditManager.log(
+            entityType = "User",
+            entityId = userId,
+            action = AuditAction.CREATE,
+            actorId = userId,
+            actorRole = Role.END_USER,
+            details = """{"event":"self_registration","username":"$username"}"""
+        )
+
+        AppLogger.info("Auth", "End user self-registered: $username")
+
+        val session = AuthSession(userId, username, Role.END_USER, LocalDateTime.now())
+        _currentSession.value = session
+        return AuthResult.Success(session)
+    }
+
     fun login(username: String, password: String): AuthResult {
         val user = database.usersQueries.getUserByUsername(username).executeAsOneOrNull()
             ?: return AuthResult.Failure("Invalid credentials")

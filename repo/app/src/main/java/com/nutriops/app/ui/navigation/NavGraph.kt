@@ -36,13 +36,14 @@ private val routeRoleMap: Map<String, Set<Role>> = mapOf(
 )
 
 private fun isRouteAllowed(route: String, role: Role?): Boolean {
-    if (role == null) return route == Routes.LOGIN || route == Routes.BOOTSTRAP
+    if (role == null) return route == Routes.LOGIN || route == Routes.BOOTSTRAP || route == Routes.REGISTER
     val allowedRoles = routeRoleMap[route] ?: return true
     return role in allowedRoles
 }
 
 object Routes {
     const val LOGIN = "login"
+    const val REGISTER = "register"
     const val BOOTSTRAP = "bootstrap"
     const val ADMIN_DASHBOARD = "admin/dashboard"
     const val ADMIN_CONFIG = "admin/config"
@@ -93,6 +94,21 @@ fun NutriOpsNavHost(
                 },
                 onNeedsBootstrap = {
                     navController.navigate(Routes.BOOTSTRAP) { popUpTo(Routes.LOGIN) { inclusive = true } }
+                },
+                onNavigateToRegister = {
+                    navController.navigate(Routes.REGISTER)
+                }
+            )
+        }
+
+        composable(Routes.REGISTER) {
+            RegisterScreen(
+                viewModel = authViewModel,
+                onRegisterSuccess = {
+                    navController.navigate(Routes.USER_DASHBOARD) { popUpTo(0) { inclusive = true } }
+                },
+                onNavigateToLogin = {
+                    navController.popBackStack()
                 }
             )
         }

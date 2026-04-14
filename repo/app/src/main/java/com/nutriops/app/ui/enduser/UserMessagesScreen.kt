@@ -45,7 +45,7 @@ class UserMessagesViewModel @Inject constructor(
             val session = authManager.currentSession.value ?: return@launch
             val msgs = messagingUseCase.getMessages(session.userId, session.userId, session.role)
             _messages.value = msgs.map { MessageUiItem(it.id, it.title, it.body, it.messageType, it.isRead == 1L, it.createdAt) }
-            val tds = messagingUseCase.getTodos(session.userId)
+            val tds = messagingUseCase.getTodos(session.userId, session.userId, session.role)
             _todos.value = tds.map { TodoUiItem(it.id, it.title, it.description, it.isCompleted == 1L, it.dueDate) }
         }
     }
@@ -65,7 +65,11 @@ class UserMessagesViewModel @Inject constructor(
     }
 
     fun completeTodo(todoId: String) {
-        viewModelScope.launch { messagingUseCase.completeTodo(todoId); load() }
+        viewModelScope.launch {
+            val session = authManager.currentSession.value ?: return@launch
+            messagingUseCase.completeTodo(todoId, session.userId, session.role)
+            load()
+        }
     }
 }
 

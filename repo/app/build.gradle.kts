@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.dagger.hilt.android")
     id("app.cash.sqldelight")
     kotlin("kapt")
@@ -48,10 +49,6 @@ android {
         compose = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.8"
-    }
-
     packaging {
         resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" }
     }
@@ -75,7 +72,7 @@ sqldelight {
     databases {
         create("NutriOpsDatabase") {
             packageName.set("com.nutriops.app.data.local")
-            dialect("app.cash.sqldelight:sqlite-3-38-dialect:2.0.1")
+            dialect("app.cash.sqldelight:sqlite-3-38-dialect:2.0.2")
         }
     }
 }
@@ -98,16 +95,16 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.6")
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.50")
-    kapt("com.google.dagger:hilt-compiler:2.50")
-    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
-    implementation("androidx.hilt:hilt-work:1.1.0")
-    kapt("androidx.hilt:hilt-compiler:1.1.0")
+    implementation("com.google.dagger:hilt-android:2.51.1")
+    kapt("com.google.dagger:hilt-compiler:2.51.1")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    kapt("androidx.hilt:hilt-compiler:1.2.0")
 
     // SQLDelight
-    implementation("app.cash.sqldelight:android-driver:2.0.1")
-    implementation("app.cash.sqldelight:coroutines-extensions:2.0.1")
-    implementation("app.cash.sqldelight:primitive-adapters:2.0.1")
+    implementation("app.cash.sqldelight:android-driver:2.0.2")
+    implementation("app.cash.sqldelight:coroutines-extensions:2.0.2")
+    implementation("app.cash.sqldelight:primitive-adapters:2.0.2")
 
     // SQLCipher for encryption at rest
     implementation("net.zetetic:android-database-sqlcipher:4.5.4")
@@ -138,7 +135,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     testImplementation("io.mockk:mockk:1.13.9")
     testImplementation("app.cash.turbine:turbine:1.0.0")
-    testImplementation("app.cash.sqldelight:sqlite-driver:2.0.1")
+    testImplementation("app.cash.sqldelight:sqlite-driver:2.0.2")
     testImplementation("com.google.truth:truth:1.2.0")
     testImplementation("org.robolectric:robolectric:4.11.1")
     testImplementation("androidx.test:core-ktx:1.5.0")

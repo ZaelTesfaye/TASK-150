@@ -101,6 +101,33 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun register(username: String, password: String) {
+        if (username.isBlank() || password.length < 8) {
+            _uiState.value = _uiState.value.copy(error = "Username required, password must be 8+ characters")
+            return
+        }
+
+        _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+
+        viewModelScope.launch {
+            when (val result = loginUseCase.register(username, password)) {
+                is AuthManager.AuthResult.Success -> {
+                    _uiState.value = AuthUiState(
+                        isAuthenticated = true,
+                        role = result.session.role.name,
+                        username = result.session.username
+                    )
+                }
+                is AuthManager.AuthResult.Failure -> {
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = result.message)
+                }
+                else -> {
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = "Registration failed")
+                }
+            }
+        }
+    }
+
     fun logout() {
         loginUseCase.logout()
         _uiState.value = AuthUiState(needsBootstrap = loginUseCase.needsBootstrap())

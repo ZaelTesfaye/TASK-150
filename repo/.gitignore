@@ -1,0 +1,44 @@
+# Gradle
+.gradle/
+build/
+*.apk
+*.ap_
+*.dex
+*.jar
+*.aar
+
+# Local configuration
+local.properties
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+
+# Android Studio
+.gradle
+.settings
+*.jks
+*.jkstore
+
+# Build output
+bin/
+gen/
+out/
+
+# Misc
+.classpath
+.project
+proguard/
+lint.xml
+
+# Kotlin
+.kotlin/
+*.kexe
+
+# SQLite
+*.db
+*.sqlite
+*.sqlite3
