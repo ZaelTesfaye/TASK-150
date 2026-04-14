@@ -343,7 +343,7 @@ class AuthorizationIntegrationTest {
 
     @Test
     fun `end user cannot complete another users todo`() = runBlocking {
-        val otherTodo = mockk<com.nutriops.app.data.local.Todos> {
+        val otherTodo = mockk<com.nutriops.app.data.local.TodoItems> {
             io.mockk.every { userId } returns "userB"
         }
         coEvery { messageRepository.getTodoById("todo-B") } returns otherTodo
