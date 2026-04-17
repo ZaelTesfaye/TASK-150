@@ -17,7 +17,7 @@ import com.nutriops.app.ui.agent.*
 import com.nutriops.app.ui.auth.*
 import com.nutriops.app.ui.enduser.*
 
-private val routeRoleMap: Map<String, Set<Role>> = mapOf(
+internal val routeRoleMap: Map<String, Set<Role>> = mapOf(
     Routes.ADMIN_DASHBOARD to setOf(Role.ADMINISTRATOR),
     Routes.ADMIN_CONFIG to setOf(Role.ADMINISTRATOR),
     Routes.ADMIN_RULES to setOf(Role.ADMINISTRATOR),
@@ -35,7 +35,21 @@ private val routeRoleMap: Map<String, Set<Role>> = mapOf(
     Routes.USER_TICKETS to setOf(Role.END_USER),
 )
 
-private fun isRouteAllowed(route: String, role: Role?): Boolean {
+internal fun resolveStartDestination(
+    needsBootstrap: Boolean,
+    isAuthenticated: Boolean,
+    role: String
+): String = when {
+    needsBootstrap -> Routes.BOOTSTRAP
+    isAuthenticated -> when (role) {
+        "ADMINISTRATOR" -> Routes.ADMIN_DASHBOARD
+        "AGENT" -> Routes.AGENT_DASHBOARD
+        else -> Routes.USER_DASHBOARD
+    }
+    else -> Routes.LOGIN
+}
+
+internal fun isRouteAllowed(route: String, role: Role?): Boolean {
     if (role == null) return route == Routes.LOGIN || route == Routes.BOOTSTRAP || route == Routes.REGISTER
     val allowedRoles = routeRoleMap[route] ?: return true
     return role in allowedRoles
@@ -69,15 +83,11 @@ fun NutriOpsNavHost(
     val authViewModel: AuthViewModel = hiltViewModel()
     val authState by authViewModel.uiState.collectAsState()
 
-    val startDestination = when {
-        authState.needsBootstrap -> Routes.BOOTSTRAP
-        authState.isAuthenticated -> when (authState.role) {
-            "ADMINISTRATOR" -> Routes.ADMIN_DASHBOARD
-            "AGENT" -> Routes.AGENT_DASHBOARD
-            else -> Routes.USER_DASHBOARD
-        }
-        else -> Routes.LOGIN
-    }
+    val startDestination = resolveStartDestination(
+        needsBootstrap = authState.needsBootstrap,
+        isAuthenticated = authState.isAuthenticated,
+        role = authState.role
+    )
 
     NavHost(navController = navController, startDestination = startDestination) {
         // ── Auth ──

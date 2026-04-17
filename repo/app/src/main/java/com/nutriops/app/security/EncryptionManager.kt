@@ -18,7 +18,7 @@ import javax.crypto.spec.GCMParameterSpec
  * - Ticket notes with PII
  * - Any other sensitive fields
  */
-class EncryptionManager(private val context: Context) {
+open class EncryptionManager(private val context: Context) {
 
     companion object {
         private const val KEYSTORE_PROVIDER = "AndroidKeyStore"
@@ -28,15 +28,19 @@ class EncryptionManager(private val context: Context) {
         private const val IV_SEPARATOR = ":"
     }
 
-    private val keyStore: KeyStore = KeyStore.getInstance(KEYSTORE_PROVIDER).apply { load(null) }
-
-    init {
-        if (!keyStore.containsAlias(KEY_ALIAS)) {
-            generateKey()
+    /**
+     * Lazily resolves the Android Keystore entry. Subclasses (e.g. test-only
+     * in-memory AES implementations) can override [encrypt] / [decrypt]
+     * without triggering this lookup on a platform that has no AndroidKeyStore
+     * (pure JVM test runs).
+     */
+    private val keyStore: KeyStore by lazy {
+        KeyStore.getInstance(KEYSTORE_PROVIDER).apply { load(null) }.also {
+            if (!it.containsAlias(KEY_ALIAS)) generateKey()
         }
     }
 
-    fun encrypt(plaintext: String): String {
+    open fun encrypt(plaintext: String): String {
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, getKey())
         val iv = cipher.iv
@@ -46,7 +50,7 @@ class EncryptionManager(private val context: Context) {
         return "$ivBase64$IV_SEPARATOR$encBase64"
     }
 
-    fun decrypt(ciphertext: String): String {
+    open fun decrypt(ciphertext: String): String {
         val parts = ciphertext.split(IV_SEPARATOR)
         if (parts.size != 2) {
             AppLogger.error("Encryption", "Invalid ciphertext format")

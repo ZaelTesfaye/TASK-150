@@ -18,7 +18,7 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.nutriops.app.di.HiltTestRunner"
         vectorDrawables { useSupportLibrary = true }
     }
 
@@ -140,10 +140,15 @@ dependencies {
     testImplementation("org.robolectric:robolectric:4.11.1")
     testImplementation("androidx.test:core-ktx:1.5.0")
     testImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation("androidx.work:work-testing:2.9.0")
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    testImplementation("androidx.compose.ui:ui-test-manifest")
 
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.51.1")
+    kaptAndroidTest("com.google.dagger:hilt-android-compiler:2.51.1")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

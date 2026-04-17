@@ -1,24 +1,39 @@
 #!/bin/bash
-# NutriOps Test Execution Script
-# Runs all unit tests and outputs a clear summary
+# NutriOps Test Execution Script — CANONICAL (Docker-contained).
+#
+# This is the only supported CI test path. It runs the entire unit +
+# integration suite inside the project Docker image. No local JDK or
+# Android SDK installation is required.
+#
+# If you need a non-Docker local path for IDE development, use
+# ./run_tests_local.sh — but be aware that it is NOT the canonical path and
+# is not how CI validates correctness.
 set -e
 
 echo "============================================"
-echo "  NutriOps Test Suite"
+echo "  NutriOps Test Suite  (Docker-contained)"
 echo "============================================"
 echo ""
 
-# Run tests via Gradle
-echo "[1/2] Running unit tests..."
-./gradlew :app:testDebugUnitTest --no-daemon --info 2>&1 | tail -50
+if ! command -v docker &> /dev/null; then
+    echo "ERROR: docker is not installed. Install Docker Desktop (or the Docker"
+    echo "       engine on Linux) and re-run. This is the canonical test path"
+    echo "       and cannot be bypassed."
+    exit 1
+fi
 
-# Collect results
+echo "[1/2] Running unit tests inside Docker..."
+if command -v docker-compose &> /dev/null; then
+    docker-compose up --build --abort-on-container-exit
+else
+    docker compose up --build --abort-on-container-exit
+fi
+
 echo ""
 echo "============================================"
 echo "  Test Results Summary"
 echo "============================================"
 
-# Parse test results from XML reports
 REPORT_DIR="app/build/test-results/testDebugUnitTest"
 if [ -d "$REPORT_DIR" ]; then
     TOTAL=0
@@ -59,27 +74,8 @@ if [ -d "$REPORT_DIR" ]; then
         echo "  STATUS: ALL TESTS PASSED"
     fi
 else
-    echo "  Test reports not found at $REPORT_DIR"
-    echo "  Running tests via Docker if available..."
-    if command -v docker-compose &> /dev/null; then
-        docker-compose up --build --abort-on-container-exit
-    else
-        echo "  Please run: ./gradlew :app:testDebugUnitTest"
-    fi
+    echo "  Test reports not found at $REPORT_DIR."
+    echo "  The Docker run may have failed before producing XML reports;"
+    echo "  see the docker-compose output above for details."
+    exit 1
 fi
-
-echo ""
-echo "============================================"
-echo "  Test Layout:"
-echo "  unit_tests/"
-echo "    - config/AppConfigTest"
-echo "    - domain/model/LearningPlanStatusTest, TicketStatusTest"
-echo "    - domain/usecase/profile/ManageProfileUseCaseTest"
-echo "    - domain/usecase/rules/EvaluateRuleUseCaseTest"
-echo "    - logging/AppLoggerTest"
-echo "    - security/PasswordHasherTest, RbacManagerTest"
-echo "  integration_tests/"
-echo "    - domain/usecase/AuthorizationIntegrationTest"
-echo "    - domain/usecase/rules/RuleHysteresisDurationTest"
-echo "    - data/repository/TicketOrderTransactionTest"
-echo "============================================"
