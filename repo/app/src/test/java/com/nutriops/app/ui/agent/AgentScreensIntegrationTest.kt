@@ -115,7 +115,13 @@ class AgentScreensIntegrationTest {
 
         val ticketId = database.ticketsQueries.getTicketsByStatus("OPEN").executeAsList().first().id
         vm.assignToSelf(ticketId)
-        composeTestRule.waitForIdle()
+        // assignToSelf launches on viewModelScope and then suspends into
+        // Dispatchers.IO (the repository wraps writes in withContext(IO)), so
+        // waitForIdle alone cannot guarantee the update is visible. Poll the
+        // DB for the status change before asserting.
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            database.ticketsQueries.getTicketById(ticketId).executeAsOne().status == "ASSIGNED"
+        }
 
         val ticket = database.ticketsQueries.getTicketById(ticketId).executeAsOne()
         assertThat(ticket.status).isEqualTo("ASSIGNED")

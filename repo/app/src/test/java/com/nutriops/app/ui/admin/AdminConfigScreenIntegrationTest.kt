@@ -87,7 +87,12 @@ class AdminConfigScreenIntegrationTest {
         composeTestRule.setContent { AdminConfigScreen(onBack = {}, viewModel = vm) }
 
         vm.createConfig("feature.z", "true")
-        composeTestRule.waitForIdle()
+        // The ViewModel launches the write in its own scope, which hops to
+        // Dispatchers.IO inside the repository. Poll until the row is
+        // visible rather than relying on waitForIdle.
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            database.configsQueries.getConfigByKey("feature.z").executeAsOneOrNull() != null
+        }
 
         val stored = database.configsQueries.getConfigByKey("feature.z").executeAsOneOrNull()
         assertThat(stored).isNotNull()

@@ -40,11 +40,17 @@ class UserDashboardScreenTest {
             )
         }
 
+        val scrollable = composeTestRule.onNode(hasScrollAction())
         composeTestRule.onNodeWithText("Welcome back!").assertIsDisplayed()
+        scrollable.performScrollToNode(hasText("My Profile"))
         composeTestRule.onNodeWithText("My Profile").assertIsDisplayed()
+        scrollable.performScrollToNode(hasText("Weekly Meal Plan"))
         composeTestRule.onNodeWithText("Weekly Meal Plan").assertIsDisplayed()
+        scrollable.performScrollToNode(hasText("Learning Plans"))
         composeTestRule.onNodeWithText("Learning Plans").assertIsDisplayed()
+        scrollable.performScrollToNode(hasText("Messages & Reminders"))
         composeTestRule.onNodeWithText("Messages & Reminders").assertIsDisplayed()
+        scrollable.performScrollToNode(hasText("Support Tickets"))
         composeTestRule.onNodeWithText("Support Tickets").assertIsDisplayed()
     }
 

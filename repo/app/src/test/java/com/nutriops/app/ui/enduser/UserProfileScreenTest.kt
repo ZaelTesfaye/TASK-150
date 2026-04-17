@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import com.nutriops.app.data.repository.ProfileRepository
 import com.nutriops.app.domain.usecase.profile.ManageProfileUseCase
 import com.nutriops.app.security.AuthManager
@@ -46,9 +47,9 @@ class UserProfileScreenTest {
         composeTestRule.onNodeWithText("My Profile").assertIsDisplayed()
         composeTestRule.onNodeWithText("Profile Settings").assertIsDisplayed()
         composeTestRule.onNodeWithText("Age Range").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Dietary Pattern").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Health Goal").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Preferred Meal Times").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Dietary Pattern").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("Health Goal").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("Preferred Meal Times").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -57,7 +58,7 @@ class UserProfileScreenTest {
             UserProfileScreen(onBack = {}, viewModel = buildViewModel())
         }
 
-        composeTestRule.onNodeWithText("Allergies (comma-separated)").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Allergies (comma-separated)").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -67,7 +68,7 @@ class UserProfileScreenTest {
         }
 
         // No profile yet → the button label is "Create Profile"
-        composeTestRule.onNodeWithText("Create Profile").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Create Profile").performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithText("Create Profile").assertIsEnabled()
     }
 

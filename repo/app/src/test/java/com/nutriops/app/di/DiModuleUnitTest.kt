@@ -49,14 +49,35 @@ class DiModuleUnitTest {
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
-        driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+        driver = createInMemoryDriverWithRetry()
         NutriOpsDatabase.Schema.create(driver)
         database = NutriOpsDatabase(driver)
     }
 
     @After
     fun tearDown() {
-        driver.close()
+        if (::driver.isInitialized) {
+            runCatching { driver.close() }
+        }
+    }
+
+    /**
+     * Under Robolectric, cold-initializing SQLite-JDBC intermittently throws a
+     * transient [java.sql.SQLException] from the native loader — most often on
+     * the first test after a cached class loader swap. Two retries are enough
+     * to paper over the flake without hiding a real SQLite failure, which
+     * would throw on every attempt.
+     */
+    private fun createInMemoryDriverWithRetry(): JdbcSqliteDriver {
+        var lastError: Throwable? = null
+        repeat(3) {
+            try {
+                return JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+            } catch (e: Throwable) {
+                lastError = e
+            }
+        }
+        throw lastError!!
     }
 
     // ── AppModule ──

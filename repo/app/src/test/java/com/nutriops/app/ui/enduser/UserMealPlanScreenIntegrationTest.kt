@@ -93,12 +93,14 @@ class UserMealPlanScreenIntegrationTest {
         composeTestRule.setContent { UserMealPlanScreen(onBack = {}, viewModel = vm) }
 
         vm.generatePlan()
-        // Let the generation + reload complete
+        // Let the generation + reload complete. We poll until all 21 meals
+        // (7 days * 3 slots) have been written, otherwise the repository can
+        // return a partial list while generation is still running.
         composeTestRule.waitForIdle()
-        composeTestRule.waitUntil(timeoutMillis = 10_000) {
+        composeTestRule.waitUntil(timeoutMillis = 15_000) {
             runBlocking {
                 val plan = mealPlanRepository.getActivePlanForUser(authManager.currentUserId)
-                plan != null && mealPlanRepository.getMealsByPlanId(plan.id).isNotEmpty()
+                plan != null && mealPlanRepository.getMealsByPlanId(plan.id).size == 21
             }
         }
 

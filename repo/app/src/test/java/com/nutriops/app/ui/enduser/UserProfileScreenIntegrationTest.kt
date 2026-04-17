@@ -3,6 +3,7 @@ package com.nutriops.app.ui.enduser
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollTo
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
 import com.nutriops.app.audit.AuditManager
@@ -72,7 +73,7 @@ class UserProfileScreenIntegrationTest {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("My Profile").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Create Profile").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Create Profile").performScrollTo().assertIsDisplayed()
     }
 
     @Test

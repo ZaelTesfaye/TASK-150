@@ -49,7 +49,7 @@ class LoginScreenTest {
         composeTestRule.onNodeWithText("Username").assertIsDisplayed()
         composeTestRule.onNodeWithText("Password").assertIsDisplayed()
         composeTestRule.onNodeWithText("Sign In").assertIsDisplayed()
-        composeTestRule.onNodeWithText("New here? Create an account").assertIsDisplayed()
+        composeTestRule.onNodeWithText("New here? Create an account").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -132,7 +132,7 @@ class LoginScreenTest {
             )
         }
 
-        composeTestRule.onNodeWithText("New here? Create an account").performClick()
+        composeTestRule.onNodeWithText("New here? Create an account").performScrollTo().performClick()
 
         assert(navigated)
     }

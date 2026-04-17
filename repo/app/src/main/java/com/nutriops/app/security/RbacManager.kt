@@ -92,6 +92,7 @@ object RbacManager {
             Permission.VIEW_ALL_USERS,
             Permission.VIEW_ANY_PROFILE,
             Permission.VIEW_ANY_MEAL_PLANS,
+            Permission.SWAP_MEAL,
             Permission.VIEW_ANY_LEARNING_PLANS,
             Permission.MANAGE_CONFIG,
             Permission.MANAGE_HOMEPAGE_MODULES,

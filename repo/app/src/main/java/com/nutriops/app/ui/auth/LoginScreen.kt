@@ -1,7 +1,9 @@
 package com.nutriops.app.ui.auth
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
@@ -36,7 +38,7 @@ fun LoginScreen(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {

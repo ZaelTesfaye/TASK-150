@@ -26,7 +26,13 @@ class CommonComponentsTest {
     @Test
     fun `LoadingIndicator renders without crashing`() {
         composeTestRule.setContent {
-            Surface { LoadingIndicator() }
+            // MaterialTheme is required because CircularProgressIndicator's
+            // default color reads from MaterialTheme.colorScheme; without it,
+            // default-argument resolution has thrown NoSuchMethodError under
+            // Robolectric in past runs.
+            MaterialTheme {
+                Surface { LoadingIndicator() }
+            }
         }
         // Robolectric layout does not surface a CircularProgressIndicator
         // by text or content description, so the assertion is that the host
