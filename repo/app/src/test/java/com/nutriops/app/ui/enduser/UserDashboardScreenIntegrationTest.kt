@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
+import com.google.common.truth.Truth.assertThat
 import com.nutriops.app.audit.AuditManager
 import com.nutriops.app.data.local.NutriOpsDatabase
 import com.nutriops.app.data.repository.MessageRepository
