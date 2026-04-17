@@ -6,6 +6,8 @@ import com.nutriops.app.domain.model.AuditAction
 import com.nutriops.app.domain.model.Role
 import com.nutriops.app.logging.AppLogger
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -25,6 +27,13 @@ class OrderRepository @Inject constructor(
 ) {
     private val queries get() = database.ordersQueries
 
+    // Serializes write-side DB work. SQLDelight's JdbcSqliteDriver shares a
+    // single JDBC connection with thread-local transaction state, so
+    // overlapping `database.transaction { ... }` calls can corrupt each
+    // other's BEGIN/COMMIT. A coroutine Mutex is cheap and keeps concurrent
+    // createOrder callers (the 15-way test, in practice) from racing.
+    private val writeLock = Mutex()
+
     suspend fun createOrder(
         userId: String, totalAmount: Double, actorId: String, actorRole: Role
     ): Result<String> = withContext(Dispatchers.IO) {
@@ -35,12 +44,14 @@ class OrderRepository @Inject constructor(
             val encryptedAmount = encryptionManager.encrypt(totalAmount.toString())
             val encryptedNotes = encryptionManager.encrypt("")
 
-            auditManager.logWithTransaction(
-                entityType = "Order", entityId = orderId,
-                action = AuditAction.CREATE, actorId = actorId, actorRole = actorRole,
-                details = """{"userId":"$userId","amount":$totalAmount}"""
-            ) {
-                queries.insertOrder(orderId, userId, "PENDING", encryptedAmount, "UNRECONCILED", actorId, encryptedNotes, now, now)
+            writeLock.withLock {
+                auditManager.logWithTransaction(
+                    entityType = "Order", entityId = orderId,
+                    action = AuditAction.CREATE, actorId = actorId, actorRole = actorRole,
+                    details = """{"userId":"$userId","amount":$totalAmount}"""
+                ) {
+                    queries.insertOrder(orderId, userId, "PENDING", encryptedAmount, "UNRECONCILED", actorId, encryptedNotes, now, now)
+                }
             }
 
             Result.success(orderId)

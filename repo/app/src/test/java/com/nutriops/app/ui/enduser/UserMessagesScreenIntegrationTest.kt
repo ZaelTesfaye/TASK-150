@@ -94,7 +94,14 @@ class UserMessagesScreenIntegrationTest {
         composeTestRule.setContent { UserMessagesScreen(onBack = {}, viewModel = vm) }
 
         composeTestRule.onNodeWithText("Mark All Read").performClick()
-        composeTestRule.waitForIdle()
+        // markAllAsRead is fired on viewModelScope → repository withContext(IO);
+        // waitForIdle only drains Compose, so poll the DB until the write is
+        // observable before asserting. Otherwise the test races the write and
+        // leaves a live coroutine that surfaces as UncaughtExceptionsBeforeTest
+        // when the TestScope finalizes.
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            runBlocking { messageRepo.getUnreadCount(authManager.currentUserId) == 0L }
+        }
 
         assertThat(messageRepo.getUnreadCount(authManager.currentUserId)).isEqualTo(0L)
     }

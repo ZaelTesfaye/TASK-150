@@ -2,6 +2,7 @@ package com.nutriops.app.ui.enduser
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
@@ -109,7 +110,14 @@ class UserMealPlanScreenIntegrationTest {
         // 7 days * 3 slots = 21
         assertThat(meals).hasSize(21)
 
+        // After the DB is populated, the ViewModel still has to re-read the
+        // plan via its own viewModelScope.launch, update StateFlow, and
+        // recompose before "BREAKFAST" lands in the semantics tree. Poll for
+        // the node rather than asserting on the first recomposition.
         composeTestRule.waitForIdle()
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithText("BREAKFAST").fetchSemanticsNodes().isNotEmpty()
+        }
         composeTestRule.onNodeWithText("BREAKFAST").assertIsDisplayed()
     }
 }

@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -21,7 +22,18 @@ fun LoadingIndicator(modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator()
+        // All CircularProgressIndicator arguments are passed explicitly.
+        // The default-argument `$default` variant of this overload has been
+        // observed to trigger NoSuchMethodError under Robolectric when the
+        // Compose compiler plugin's synthetic signature drifts between the
+        // project's Kotlin/Compose build and the material3 runtime.
+        CircularProgressIndicator(
+            modifier = Modifier,
+            color = MaterialTheme.colorScheme.primary,
+            strokeWidth = 4.dp,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            strokeCap = StrokeCap.Round
+        )
     }
 }
 

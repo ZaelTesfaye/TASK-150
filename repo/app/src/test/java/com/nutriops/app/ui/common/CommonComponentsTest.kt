@@ -3,6 +3,7 @@ package com.nutriops.app.ui.common
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -26,18 +27,20 @@ class CommonComponentsTest {
     @Test
     fun `LoadingIndicator renders without crashing`() {
         composeTestRule.setContent {
-            // MaterialTheme is required because CircularProgressIndicator's
-            // default color reads from MaterialTheme.colorScheme; without it,
-            // default-argument resolution has thrown NoSuchMethodError under
-            // Robolectric in past runs.
+            // MaterialTheme is required because LoadingIndicator's
+            // CircularProgressIndicator reads colors from MaterialTheme. We
+            // pass `modifier` explicitly to avoid emitting a call to
+            // LoadingIndicator's synthetic `$default` method — that path has
+            // been observed to trigger NoSuchMethodError under Robolectric
+            // when the Compose compiler plugin's generated signature drifts
+            // from the material3 runtime artifact.
             MaterialTheme {
-                Surface { LoadingIndicator() }
+                LoadingIndicator(modifier = Modifier)
             }
         }
         // Robolectric layout does not surface a CircularProgressIndicator
         // by text or content description, so the assertion is that the host
-        // Surface composes cleanly. A throwing LoadingIndicator would fail
-        // setContent.
+        // composes cleanly. A throwing LoadingIndicator would fail setContent.
         composeTestRule.waitForIdle()
     }
 
