@@ -94,7 +94,17 @@ class AdminRulesScreenIntegrationTest {
             type = "EXCEPTION",
             conditionsJson = """{"type":"metric","metricType":"exception_count","operator":"<","threshold":2.0}"""
         )
-        composeTestRule.waitForIdle()
+        // createRule is launched on viewModelScope and then suspends into
+        // Dispatchers.IO inside the repository, so waitForIdle only drains
+        // Compose and returns before the row is written. Poll until the new
+        // rule is observable — otherwise the test asserts too early and the
+        // live coroutine surfaces as UncaughtExceptionsBeforeTest when the
+        // TestScope finalizes.
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            runBlocking {
+                ruleRepository.getAllActiveRules().any { it.name == "Second rule" }
+            }
+        }
 
         val rules = ruleRepository.getAllActiveRules()
         assertThat(rules.map { it.name }).containsAtLeast("Adherence threshold", "Second rule")
