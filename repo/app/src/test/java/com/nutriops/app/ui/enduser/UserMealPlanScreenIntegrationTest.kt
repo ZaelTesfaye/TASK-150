@@ -88,8 +88,10 @@ class UserMealPlanScreenIntegrationTest {
         // Let the generation + reload complete
         composeTestRule.waitForIdle()
         composeTestRule.waitUntil(timeoutMillis = 10_000) {
-            val plan = mealPlanRepository.getActivePlanForUser(authManager.currentUserId)
-            plan != null && mealPlanRepository.getMealsByPlanId(plan.id).isNotEmpty()
+            runBlocking {
+                val plan = mealPlanRepository.getActivePlanForUser(authManager.currentUserId)
+                plan != null && mealPlanRepository.getMealsByPlanId(plan.id).isNotEmpty()
+            }
         }
 
         val plan = mealPlanRepository.getActivePlanForUser(authManager.currentUserId)!!

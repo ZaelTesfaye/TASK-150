@@ -107,7 +107,7 @@ class ManageTicketUseCaseIntegrationTest {
     }
 
     @Test
-    fun `end user filing their own ticket is allowed; filing another users ticket is rejected`() = runBlocking {
+    fun `end user filing their own ticket is allowed and filing another users ticket is rejected`() = runBlocking {
         val self = useCase.createTicket(
             userId = "user1", ticketType = TicketType.DELAY,
             priority = TicketPriority.MEDIUM, subject = "own",

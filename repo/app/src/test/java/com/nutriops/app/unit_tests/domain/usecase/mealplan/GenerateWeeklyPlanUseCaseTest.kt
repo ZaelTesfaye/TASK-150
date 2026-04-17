@@ -101,6 +101,7 @@ class GenerateWeeklyPlanUseCaseTest {
             )
         } answers {
             capturedDayMealTimes += daySlot.captured to mealTimeSlot.captured
+            Result.success("meal-${daySlot.captured}-${mealTimeSlot.captured}")
         }
 
         useCase.execute(
@@ -143,6 +144,7 @@ class GenerateWeeklyPlanUseCaseTest {
             )
         } answers {
             captured += Triple(dayCapture.captured, mealTimeCapture.captured, caloriesCapture.captured)
+            Result.success("meal-${dayCapture.captured}-${mealTimeCapture.captured}")
         }
 
         useCase.execute("user1", LocalDate.of(2026, 4, 6), "user1", Role.END_USER)
@@ -231,7 +233,10 @@ class GenerateWeeklyPlanUseCaseTest {
                 proteinGrams = any(), carbGrams = any(), fatGrams = any(),
                 reasons = capture(reasonsCapture)
             )
-        } answers { capturedReasons += reasonsCapture.captured }
+        } answers {
+            capturedReasons += reasonsCapture.captured
+            Result.success("meal-${capturedReasons.size}")
+        }
 
         useCase.execute("user1", LocalDate.of(2026, 4, 6), "user1", Role.END_USER)
 

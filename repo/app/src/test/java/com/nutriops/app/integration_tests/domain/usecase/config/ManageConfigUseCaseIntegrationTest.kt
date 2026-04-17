@@ -111,7 +111,7 @@ class ManageConfigUseCaseIntegrationTest {
     fun `validateAndUseCoupon enforces per-user usage cap via real usage rows`() = runBlocking {
         val couponId = useCase.createCoupon(
             "SAVE10", "10% off", "PERCENT", 10.0, "{}",
-            maxUses = 1L, periodDays = 30L, configVersionId = null,
+            maxUsesPerUser = 1L, periodDays = 30L, configVersionId = null,
             actorId = "admin1", actorRole = Role.ADMINISTRATOR
         ).getOrNull()!!
 

@@ -136,14 +136,17 @@ class ManageTicketUseCaseTest {
     // ── addEvidence ──
 
     @Test
-    fun `addEvidence rejects non-image non-text types`() = runBlocking {
+    fun `addEvidence rejects image evidence without content URI`() = runBlocking {
         val ticket = mockk<Tickets> { every { userId } returns "user1" }
         coEvery { ticketRepository.getTicketById("t1") } returns ticket
+        coEvery {
+            ticketRepository.addEvidence("t1", EvidenceType.IMAGE, null, null, "user1", 500L, Role.END_USER)
+        } returns Result.failure(IllegalArgumentException("Image evidence requires a content URI"))
 
         val result = useCase.addEvidence(
             ticketId = "t1",
-            evidenceType = EvidenceType.AUDIO,
-            contentUri = "content://audio",
+            evidenceType = EvidenceType.IMAGE,
+            contentUri = null,
             textContent = null,
             uploadedBy = "user1",
             fileSizeBytes = 500L,
@@ -152,8 +155,8 @@ class ManageTicketUseCaseTest {
 
         assertThat(result.isFailure).isTrue()
         assertThat(result.exceptionOrNull()).isInstanceOf(IllegalArgumentException::class.java)
-        coVerify(exactly = 0) {
-            ticketRepository.addEvidence(any(), any(), any(), any(), any(), any(), any())
+        coVerify(exactly = 1) {
+            ticketRepository.addEvidence("t1", EvidenceType.IMAGE, null, null, "user1", 500L, Role.END_USER)
         }
     }
 
