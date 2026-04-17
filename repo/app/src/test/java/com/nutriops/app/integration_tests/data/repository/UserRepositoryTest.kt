@@ -37,7 +37,7 @@ class UserRepositoryTest {
     // ── createUser ──
 
     @Test
-    fun `create and retrieve by id returns equal data with correct role`() = runBlocking {
+    fun `create and retrieve by id returns equal data with correct role`(): Unit = runBlocking {
         val result = repository.createUser(
             "alice", "password123", Role.END_USER, "admin1", Role.ADMINISTRATOR
         )
@@ -59,7 +59,7 @@ class UserRepositoryTest {
     }
 
     @Test
-    fun `creating two users with the same username fails with a uniqueness error`() = runBlocking {
+    fun `creating two users with the same username fails with a uniqueness error`(): Unit = runBlocking {
         val first = repository.createUser("alice", "password123", Role.END_USER, "admin1", Role.ADMINISTRATOR)
         val second = repository.createUser("alice", "other123", Role.AGENT, "admin1", Role.ADMINISTRATOR)
 
@@ -70,7 +70,7 @@ class UserRepositoryTest {
     }
 
     @Test
-    fun `case-sensitive username lookup follows SQLite default semantics`() = runBlocking {
+    fun `case-sensitive username lookup follows SQLite default semantics`(): Unit = runBlocking {
         repository.createUser("Alice", "password123", Role.END_USER, "admin1", Role.ADMINISTRATOR)
 
         assertThat(repository.getUserByUsername("Alice")).isNotNull()
@@ -79,7 +79,7 @@ class UserRepositoryTest {
     }
 
     @Test
-    fun `creating a user with invalid role CHECK constraint fails`() = runBlocking {
+    fun `creating a user with invalid role CHECK constraint fails`(): Unit = runBlocking {
         // Bypass the repository (which only accepts Role enum) and insert
         // directly with a bogus role string to exercise the CHECK constraint.
         val result = runCatching {
@@ -97,7 +97,7 @@ class UserRepositoryTest {
     // ── getUsersByRole ──
 
     @Test
-    fun `getUsersByRole filters correctly`() = runBlocking {
+    fun `getUsersByRole filters correctly`(): Unit = runBlocking {
         repository.createUser("alice", "password123", Role.END_USER, "admin1", Role.ADMINISTRATOR)
         repository.createUser("bob", "password123", Role.AGENT, "admin1", Role.ADMINISTRATOR)
         repository.createUser("carol", "password123", Role.END_USER, "admin1", Role.ADMINISTRATOR)
@@ -110,7 +110,7 @@ class UserRepositoryTest {
     }
 
     @Test
-    fun `getAllUsers returns every row in reverse-chronological order`() = runBlocking {
+    fun `getAllUsers returns every row in reverse-chronological order`(): Unit = runBlocking {
         repository.createUser("first", "password123", Role.END_USER, "admin1", Role.ADMINISTRATOR)
         Thread.sleep(10)
         repository.createUser("second", "password123", Role.END_USER, "admin1", Role.ADMINISTRATOR)
@@ -121,7 +121,7 @@ class UserRepositoryTest {
     }
 
     @Test
-    fun `countUsers reflects total row count`() = runBlocking {
+    fun `countUsers reflects total row count`(): Unit = runBlocking {
         assertThat(repository.countUsers()).isEqualTo(0L)
 
         repository.createUser("a", "password123", Role.END_USER, "admin1", Role.ADMINISTRATOR)
@@ -133,7 +133,7 @@ class UserRepositoryTest {
     // ── deactivateUser (soft-delete semantics) ──
 
     @Test
-    fun `deactivateUser marks isActive = 0 and persists it`() = runBlocking {
+    fun `deactivateUser marks isActive = 0 and persists it`(): Unit = runBlocking {
         val userId = repository.createUser(
             "alice", "password123", Role.END_USER, "admin1", Role.ADMINISTRATOR
         ).getOrNull()!!
@@ -151,13 +151,13 @@ class UserRepositoryTest {
     }
 
     @Test
-    fun `deactivateUser fails for unknown user id`() = runBlocking {
+    fun `deactivateUser fails for unknown user id`(): Unit = runBlocking {
         val res = repository.deactivateUser("missing", "admin1", Role.ADMINISTRATOR)
         assertThat(res.isFailure).isTrue()
     }
 
     @Test
-    fun `deactivated users still appear in getAllUsers - this is soft delete`() = runBlocking {
+    fun `deactivated users still appear in getAllUsers - this is soft delete`(): Unit = runBlocking {
         val userId = repository.createUser(
             "alice", "password123", Role.END_USER, "admin1", Role.ADMINISTRATOR
         ).getOrNull()!!

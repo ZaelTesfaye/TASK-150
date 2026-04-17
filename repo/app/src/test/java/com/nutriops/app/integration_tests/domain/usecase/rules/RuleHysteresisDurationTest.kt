@@ -11,6 +11,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -20,7 +22,13 @@ import java.util.UUID
  * back-calc behavior. Runs against a real in-memory SQLDelight database so
  * persistence boundaries (condition-hold upsert/delete, metric snapshot
  * lookups, rule version selection) are exercised end-to-end.
+ *
+ * Uses [RobolectricTestRunner] because [EvaluateRuleUseCase.parseCondition]
+ * relies on `org.json.JSONObject`, which is an Android-only class -- on a
+ * plain JVM JUnit runner with `isReturnDefaultValues = true` it returns stub
+ * values that silently degrade condition parsing.
  */
+@RunWith(RobolectricTestRunner::class)
 class RuleHysteresisDurationTest {
 
     private lateinit var driver: JdbcSqliteDriver
@@ -220,7 +228,15 @@ class RuleHysteresisDurationTest {
             hysteresisEnter = 90.0,
             conditionsJson = """{"type":"metric","metricType":"adherence_rate","operator":">=","threshold":90.0}"""
         )
-        // Version 1 is auto-created by insertRule; now append version 2 (threshold lowered to 70)
+        // insertRule() seeds v1 with createdAt = "now". Patch that row to a
+        // known historical timestamp so both metric snapshots land after it.
+        driver.execute(
+            identifier = null,
+            sql = "UPDATE RuleVersions SET createdAt = '2026-01-01T00:00:00' WHERE ruleId = '$ruleId' AND version = 1",
+            parameters = 0,
+            binders = null
+        )
+        // v2: threshold lowered to 70, effective from Feb 1
         insertRuleVersion(
             ruleId = ruleId,
             version = 2L,
@@ -229,9 +245,9 @@ class RuleHysteresisDurationTest {
             createdAt = "2026-02-01T00:00:00"
         )
 
-        // Metric 1 recorded under v1 (Jan 15) with value 80 → v1 threshold 90 → not triggered
+        // Metric 1 recorded under v1 (Jan 15) with value 80 -> v1 threshold 90 -> not triggered
         insertMetricSnapshot(ruleId, "user1", "adherence_rate", 80.0, snapshotDate = "2026-01-15T12:00:00")
-        // Metric 2 recorded under v2 (Feb 15) with value 80 → v2 threshold 70 → triggered
+        // Metric 2 recorded under v2 (Feb 15) with value 80 -> v2 threshold 70 -> triggered
         insertMetricSnapshot(ruleId, "user1", "adherence_rate", 80.0, snapshotDate = "2026-02-15T12:00:00")
 
         val result = useCase.backCalculate(

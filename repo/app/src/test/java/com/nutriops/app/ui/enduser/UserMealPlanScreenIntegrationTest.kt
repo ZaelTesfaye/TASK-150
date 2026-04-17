@@ -13,7 +13,12 @@ import com.nutriops.app.domain.model.Role
 import com.nutriops.app.domain.usecase.mealplan.GenerateWeeklyPlanUseCase
 import com.nutriops.app.domain.usecase.mealplan.SwapMealUseCase
 import com.nutriops.app.security.AuthManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -21,6 +26,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class UserMealPlanScreenIntegrationTest {
 
@@ -36,6 +42,7 @@ class UserMealPlanScreenIntegrationTest {
 
     @Before
     fun setup() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
         driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         NutriOpsDatabase.Schema.create(driver)
         database = NutriOpsDatabase(driver)
@@ -62,6 +69,7 @@ class UserMealPlanScreenIntegrationTest {
 
     @After
     fun tearDown() {
+        Dispatchers.resetMain()
         driver.close()
     }
 
@@ -80,7 +88,7 @@ class UserMealPlanScreenIntegrationTest {
     }
 
     @Test
-    fun `generatePlan() writes 21 meal rows and the screen renders breakfast slot`() = runBlocking {
+    fun `generatePlan() writes 21 meal rows and the screen renders breakfast slot`(): Unit = runBlocking {
         val vm = viewModel()
         composeTestRule.setContent { UserMealPlanScreen(onBack = {}, viewModel = vm) }
 

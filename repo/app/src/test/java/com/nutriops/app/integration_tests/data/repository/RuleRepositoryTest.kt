@@ -38,7 +38,7 @@ class RuleRepositoryTest {
     // ── createRule ──
 
     @Test
-    fun `createRule persists rule and version 1, plus audit entry`() = runBlocking {
+    fun `createRule persists rule and version 1, plus audit entry`(): Unit = runBlocking {
         val result = repository.createRule(
             name = "High adherence",
             description = "Trigger when adherence drops",
@@ -71,7 +71,7 @@ class RuleRepositoryTest {
     }
 
     @Test
-    fun `createRule with invalid ruleType CHECK constraint fails`() = runBlocking {
+    fun `createRule with invalid ruleType CHECK constraint fails`(): Unit = runBlocking {
         val result = repository.createRule(
             name = "bad-type", description = "", ruleType = "INVALID_TYPE",
             conditionsJson = "{}", hysteresisEnter = 80.0, hysteresisExit = 90.0,
@@ -84,7 +84,7 @@ class RuleRepositoryTest {
     // ── updateRule ──
 
     @Test
-    fun `updateRule persists new condition and bumps version`() = runBlocking {
+    fun `updateRule persists new condition and bumps version`(): Unit = runBlocking {
         val ruleId = createRule("r1")
 
         val result = repository.updateRule(
@@ -112,7 +112,7 @@ class RuleRepositoryTest {
     }
 
     @Test
-    fun `updateRule fails for unknown rule id`() = runBlocking {
+    fun `updateRule fails for unknown rule id`(): Unit = runBlocking {
         val result = repository.updateRule(
             ruleId = "missing", name = "", description = "",
             ruleType = "ADHERENCE", conditionsJson = "{}",
@@ -126,7 +126,7 @@ class RuleRepositoryTest {
     }
 
     @Test
-    fun `inserting a second RuleVersion row with the same (ruleId, version) fails the UNIQUE constraint`() = runBlocking {
+    fun `inserting a second RuleVersion row with the same (ruleId, version) fails the UNIQUE constraint`(): Unit = runBlocking {
         val ruleId = createRule("r1")
 
         val duplicate = runCatching {
@@ -146,7 +146,7 @@ class RuleRepositoryTest {
     // ── Queries ──
 
     @Test
-    fun `getAllActiveRules returns only active rules`() = runBlocking {
+    fun `getAllActiveRules returns only active rules`(): Unit = runBlocking {
         val r1 = createRule("r1")
         val r2 = createRule("r2")
 
@@ -164,7 +164,7 @@ class RuleRepositoryTest {
     }
 
     @Test
-    fun `getRulesByType filters by context key (ruleType)`() = runBlocking {
+    fun `getRulesByType filters by context key (ruleType)`(): Unit = runBlocking {
         createRule("a1", type = "ADHERENCE")
         createRule("e1", type = "EXCEPTION")
         createRule("k1", type = "OPERATIONAL_KPI")
@@ -179,7 +179,7 @@ class RuleRepositoryTest {
     }
 
     @Test
-    fun `getRuleVersion finds specific version by id and version number`() = runBlocking {
+    fun `getRuleVersion finds specific version by id and version number`(): Unit = runBlocking {
         val ruleId = createRule("r1")
         repository.updateRule(
             ruleId = ruleId, name = "r1", description = "",
@@ -204,7 +204,7 @@ class RuleRepositoryTest {
     // ── Condition holds ──
 
     @Test
-    fun `upsert and getConditionHold round-trip`() = runBlocking {
+    fun `upsert and getConditionHold round-trip`(): Unit = runBlocking {
         val ruleId = createRule("r1")
         repository.upsertConditionHold(ruleId, "user1", nowIso())
 
@@ -214,7 +214,7 @@ class RuleRepositoryTest {
     }
 
     @Test
-    fun `deleteConditionHold removes the row`() = runBlocking {
+    fun `deleteConditionHold removes the row`(): Unit = runBlocking {
         val ruleId = createRule("r1")
         repository.upsertConditionHold(ruleId, "user1", nowIso())
         assertThat(repository.getConditionHold(ruleId, "user1")).isNotNull()

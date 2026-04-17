@@ -13,7 +13,12 @@ import com.nutriops.app.domain.model.MessageType
 import com.nutriops.app.domain.model.TriggerEvent
 import com.nutriops.app.domain.usecase.messaging.ManageMessagingUseCase
 import com.nutriops.app.security.AuthManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -21,6 +26,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class UserMessagesScreenIntegrationTest {
 
@@ -35,6 +41,7 @@ class UserMessagesScreenIntegrationTest {
 
     @Before
     fun setup() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
         driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         NutriOpsDatabase.Schema.create(driver)
         database = NutriOpsDatabase(driver)
@@ -63,6 +70,7 @@ class UserMessagesScreenIntegrationTest {
 
     @After
     fun tearDown() {
+        Dispatchers.resetMain()
         driver.close()
     }
 
@@ -81,7 +89,7 @@ class UserMessagesScreenIntegrationTest {
     }
 
     @Test
-    fun `Mark All Read flips the real DB row for the active user`() = runBlocking {
+    fun `Mark All Read flips the real DB row for the active user`(): Unit = runBlocking {
         val vm = UserMessagesViewModel(messagingUseCase, authManager)
         composeTestRule.setContent { UserMessagesScreen(onBack = {}, viewModel = vm) }
 

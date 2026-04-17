@@ -105,8 +105,9 @@ class TicketOrderTransactionTest {
 
         val audit = auditManager.getAuditTrail("Ticket", ticketId)
             .filter { it.action == AuditAction.STATUS_CHANGE.name }
-        assertThat(audit).isNotEmpty()
-        assertThat(audit.last().newState).contains("IN_PROGRESS")
+        assertThat(audit).hasSize(2) // OPEN->ASSIGNED, ASSIGNED->IN_PROGRESS
+        // getAuditTrail orders newest-first, so the most recent is index 0
+        assertThat(audit.first().newState).contains("IN_PROGRESS")
     }
 
     @Test

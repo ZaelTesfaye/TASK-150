@@ -45,7 +45,7 @@ class ConfigRepositoryTest {
     // ── Config CRUD ──
 
     @Test
-    fun `create and retrieve by key returns equal data`() = runBlocking {
+    fun `create and retrieve by key returns equal data`(): Unit = runBlocking {
         val result = repository.createConfig("feature.x", "on", "admin1", Role.ADMINISTRATOR)
         assertThat(result.isSuccess).isTrue()
         val configId = result.getOrNull()!!
@@ -63,7 +63,7 @@ class ConfigRepositoryTest {
     }
 
     @Test
-    fun `update persists new value and bumps version without affecting other keys`() = runBlocking {
+    fun `update persists new value and bumps version without affecting other keys`(): Unit = runBlocking {
         val aId = repository.createConfig("a", "1", "admin1", Role.ADMINISTRATOR).getOrNull()!!
         val bId = repository.createConfig("b", "2", "admin1", Role.ADMINISTRATOR).getOrNull()!!
 
@@ -79,7 +79,7 @@ class ConfigRepositoryTest {
     }
 
     @Test
-    fun `update preserves a version history row per edit`() = runBlocking {
+    fun `update preserves a version history row per edit`(): Unit = runBlocking {
         val id = repository.createConfig("feature.x", "v1", "admin1", Role.ADMINISTRATOR).getOrNull()!!
 
         repository.updateConfig(id, "v2", "admin1", Role.ADMINISTRATOR)
@@ -91,19 +91,19 @@ class ConfigRepositoryTest {
     }
 
     @Test
-    fun `update fails for unknown config id`() = runBlocking {
+    fun `update fails for unknown config id`(): Unit = runBlocking {
         val result = repository.updateConfig("missing", "value", "admin1", Role.ADMINISTRATOR)
         assertThat(result.isFailure).isTrue()
     }
 
     @Test
-    fun `fetching a non-existent key returns null and does not throw`() = runBlocking {
+    fun `fetching a non-existent key returns null and does not throw`(): Unit = runBlocking {
         val result = repository.getConfigByKey("never.existed")
         assertThat(result).isNull()
     }
 
     @Test
-    fun `bulk insert of multiple configs is retrievable via getAllConfigs`() = runBlocking {
+    fun `bulk insert of multiple configs is retrievable via getAllConfigs`(): Unit = runBlocking {
         val keys = listOf("k1", "k2", "k3", "k4", "k5")
         for ((idx, key) in keys.withIndex()) {
             repository.createConfig(key, "value-$idx", "admin1", Role.ADMINISTRATOR)
@@ -117,9 +117,9 @@ class ConfigRepositoryTest {
     // ── Coupons ──
 
     @Test
-    fun `duplicate coupon code violates UNIQUE constraint on Coupons_code`() = runBlocking {
+    fun `duplicate coupon code violates UNIQUE constraint on Coupons_code`(): Unit = runBlocking {
         val first = repository.createCoupon(
-            code = "SAVE10", description = "10% off", discountType = "PERCENT",
+            code = "SAVE10", description = "10% off", discountType = "PERCENTAGE",
             discountValue = 10.0, conditionsJson = "{}",
             maxUsesPerUser = 2L, periodDays = 30L, configVersionId = null,
             actorId = "admin1", actorRole = Role.ADMINISTRATOR
@@ -127,7 +127,7 @@ class ConfigRepositoryTest {
         assertThat(first.isSuccess).isTrue()
 
         val duplicate = repository.createCoupon(
-            code = "SAVE10", description = "dup", discountType = "PERCENT",
+            code = "SAVE10", description = "dup", discountType = "PERCENTAGE",
             discountValue = 5.0, conditionsJson = "{}",
             maxUsesPerUser = 1L, periodDays = 30L, configVersionId = null,
             actorId = "admin1", actorRole = Role.ADMINISTRATOR
@@ -137,9 +137,9 @@ class ConfigRepositoryTest {
     }
 
     @Test
-    fun `validateCouponUsage returns true until maxUsesPerUser is reached`() = runBlocking {
+    fun `validateCouponUsage returns true until maxUsesPerUser is reached`(): Unit = runBlocking {
         val couponId = repository.createCoupon(
-            code = "WELCOME", description = "Welcome discount", discountType = "PERCENT",
+            code = "WELCOME", description = "Welcome discount", discountType = "PERCENTAGE",
             discountValue = 5.0, conditionsJson = "{}",
             maxUsesPerUser = 2L, periodDays = 30L, configVersionId = null,
             actorId = "admin1", actorRole = Role.ADMINISTRATOR
@@ -153,7 +153,7 @@ class ConfigRepositoryTest {
     }
 
     @Test
-    fun `validateCouponUsage returns failure for unknown coupon id`() = runBlocking {
+    fun `validateCouponUsage returns failure for unknown coupon id`(): Unit = runBlocking {
         val result = repository.validateCouponUsage("missing", "u1")
         assertThat(result.isFailure).isTrue()
     }
@@ -161,7 +161,7 @@ class ConfigRepositoryTest {
     // ── Black/White list ──
 
     @Test
-    fun `blacklist membership is detectable via isBlacklisted`() = runBlocking {
+    fun `blacklist membership is detectable via isBlacklisted`(): Unit = runBlocking {
         repository.addToList("BLACK", "USER", "spam@example.com", "spam",
             "admin1", Role.ADMINISTRATOR)
 
@@ -172,7 +172,7 @@ class ConfigRepositoryTest {
     }
 
     @Test
-    fun `getBlackWhiteList filters by list type`() = runBlocking {
+    fun `getBlackWhiteList filters by list type`(): Unit = runBlocking {
         repository.addToList("BLACK", "USER", "a", "r", "admin1", Role.ADMINISTRATOR)
         repository.addToList("BLACK", "USER", "b", "r", "admin1", Role.ADMINISTRATOR)
         repository.addToList("WHITE", "USER", "c", "r", "admin1", Role.ADMINISTRATOR)
@@ -184,7 +184,7 @@ class ConfigRepositoryTest {
     // ── Homepage / Ad slots / Campaigns ──
 
     @Test
-    fun `createHomepageModule and createAdSlot persist and are retrievable`() = runBlocking {
+    fun `createHomepageModule and createAdSlot persist and are retrievable`(): Unit = runBlocking {
         repository.createHomepageModule("hero", "HERO", 0L, null, "admin1", Role.ADMINISTRATOR)
         repository.createAdSlot("slot1", "TOP", "payload", null, "admin1", Role.ADMINISTRATOR)
 
@@ -198,7 +198,7 @@ class ConfigRepositoryTest {
     }
 
     @Test
-    fun `createCampaign rejects end-date-before-start-date`() = runBlocking {
+    fun `createCampaign rejects end-date-before-start-date`(): Unit = runBlocking {
         val result = repository.createCampaign(
             name = "bad", description = "", landingTopic = "topic",
             startDate = "2026-05-01", endDate = "2026-04-01", configVersionId = null,
@@ -208,7 +208,7 @@ class ConfigRepositoryTest {
     }
 
     @Test
-    fun `createCampaign rejects malformed date format`() = runBlocking {
+    fun `createCampaign rejects malformed date format`(): Unit = runBlocking {
         val result = repository.createCampaign(
             name = "bad-date", description = "", landingTopic = "topic",
             startDate = "yesterday", endDate = "tomorrow", configVersionId = null,

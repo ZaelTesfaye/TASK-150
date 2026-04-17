@@ -43,7 +43,7 @@ class RolloutRepositoryTest {
     // ── createRollout ──
 
     @Test
-    fun `createRollout persists canary assignment and status`() = runBlocking {
+    fun `createRollout persists canary assignment and status`(): Unit = runBlocking {
         val rolloutId = repository.createRollout(
             configVersionId = "v1", canaryPercentage = 20,
             actorId = "admin1", actorRole = Role.ADMINISTRATOR
@@ -62,7 +62,7 @@ class RolloutRepositoryTest {
     }
 
     @Test
-    fun `canary assignment is deterministic across repeated calls`() = runBlocking {
+    fun `canary assignment is deterministic across repeated calls`(): Unit = runBlocking {
         val first = repository.createRollout("v1", 40, "admin1", Role.ADMINISTRATOR).getOrNull()!!
         val second = repository.createRollout("v2", 40, "admin1", Role.ADMINISTRATOR).getOrNull()!!
 
@@ -73,7 +73,7 @@ class RolloutRepositoryTest {
     }
 
     @Test
-    fun `isUserInCanary reflects stored canary membership`() = runBlocking {
+    fun `isUserInCanary reflects stored canary membership`(): Unit = runBlocking {
         // 40% of 5 users = 2 — alphabetically first two are u-alpha and u-bravo
         val rolloutId = repository.createRollout("v1", 40, "admin1", Role.ADMINISTRATOR).getOrNull()!!
 
@@ -86,7 +86,7 @@ class RolloutRepositoryTest {
     // ── promoteToFull ──
 
     @Test
-    fun `promoteToFull transitions CANARY to FULL`() = runBlocking {
+    fun `promoteToFull transitions CANARY to FULL`(): Unit = runBlocking {
         val rolloutId = repository.createRollout("v1", 10, "admin1", Role.ADMINISTRATOR).getOrNull()!!
 
         val result = repository.promoteToFull(rolloutId, "admin1", Role.ADMINISTRATOR)
@@ -97,13 +97,13 @@ class RolloutRepositoryTest {
     }
 
     @Test
-    fun `promoteToFull fails for unknown rollout id`() = runBlocking {
+    fun `promoteToFull fails for unknown rollout id`(): Unit = runBlocking {
         val result = repository.promoteToFull("missing", "admin1", Role.ADMINISTRATOR)
         assertThat(result.isFailure).isTrue()
     }
 
     @Test
-    fun `promoteToFull is rejected when rollout is already FULL`() = runBlocking {
+    fun `promoteToFull is rejected when rollout is already FULL`(): Unit = runBlocking {
         val rolloutId = repository.createRollout("v1", 10, "admin1", Role.ADMINISTRATOR).getOrNull()!!
         repository.promoteToFull(rolloutId, "admin1", Role.ADMINISTRATOR)
 
@@ -115,7 +115,7 @@ class RolloutRepositoryTest {
     // ── rollback ──
 
     @Test
-    fun `rollback transitions rollout to ROLLED_BACK`() = runBlocking {
+    fun `rollback transitions rollout to ROLLED_BACK`(): Unit = runBlocking {
         val rolloutId = repository.createRollout("v1", 10, "admin1", Role.ADMINISTRATOR).getOrNull()!!
 
         val result = repository.rollback(rolloutId, "admin1", Role.ADMINISTRATOR)
@@ -126,7 +126,7 @@ class RolloutRepositoryTest {
     }
 
     @Test
-    fun `rollback of an already rolled-back rollout is idempotent`() = runBlocking {
+    fun `rollback of an already rolled-back rollout is idempotent`(): Unit = runBlocking {
         val rolloutId = repository.createRollout("v1", 10, "admin1", Role.ADMINISTRATOR).getOrNull()!!
         repository.rollback(rolloutId, "admin1", Role.ADMINISTRATOR)
 
@@ -140,7 +140,7 @@ class RolloutRepositoryTest {
     // ── getActiveRollout / filtering by status ──
 
     @Test
-    fun `getActiveRollout returns the most recent CANARY or FULL rollout`() = runBlocking {
+    fun `getActiveRollout returns the most recent CANARY or FULL rollout`(): Unit = runBlocking {
         val first = repository.createRollout("v1", 10, "admin1", Role.ADMINISTRATOR).getOrNull()!!
         repository.rollback(first, "admin1", Role.ADMINISTRATOR) // not active anymore
 
@@ -152,7 +152,7 @@ class RolloutRepositoryTest {
     }
 
     @Test
-    fun `getActiveRollout returns null when all rollouts are rolled back`() = runBlocking {
+    fun `getActiveRollout returns null when all rollouts are rolled back`(): Unit = runBlocking {
         val id = repository.createRollout("v1", 10, "admin1", Role.ADMINISTRATOR).getOrNull()!!
         repository.rollback(id, "admin1", Role.ADMINISTRATOR)
 
@@ -160,7 +160,7 @@ class RolloutRepositoryTest {
     }
 
     @Test
-    fun `getRolloutsByStatus filters correctly via underlying query`() = runBlocking {
+    fun `getRolloutsByStatus filters correctly via underlying query`(): Unit = runBlocking {
         val canaryId = repository.createRollout("v1", 10, "admin1", Role.ADMINISTRATOR).getOrNull()!!
         val fullId = repository.createRollout("v2", 10, "admin1", Role.ADMINISTRATOR).getOrNull()!!
         repository.promoteToFull(fullId, "admin1", Role.ADMINISTRATOR)
@@ -177,7 +177,7 @@ class RolloutRepositoryTest {
     }
 
     @Test
-    fun `inserting a rollout with canaryPercentage out of 1-100 range fails the CHECK`() = runBlocking {
+    fun `inserting a rollout with canaryPercentage out of 1-100 range fails the CHECK`(): Unit = runBlocking {
         val id = java.util.UUID.randomUUID().toString()
         val now = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
 

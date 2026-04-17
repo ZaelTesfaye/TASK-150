@@ -42,7 +42,7 @@ class OrderRepositoryTest {
     // ── createOrder ──
 
     @Test
-    fun `create order persists encrypted amount, default statuses, and audit entry`() = runBlocking {
+    fun `create order persists encrypted amount, default statuses, and audit entry`(): Unit = runBlocking {
         val result = repository.createOrder("user1", 99.99, "admin1", Role.ADMINISTRATOR)
         assertThat(result.isSuccess).isTrue()
         val orderId = result.getOrNull()!!
@@ -63,7 +63,7 @@ class OrderRepositoryTest {
     // ── updateOrderStatus ──
 
     @Test
-    fun `updateOrderStatus transitions status and writes audit`() = runBlocking {
+    fun `updateOrderStatus transitions status and writes audit`(): Unit = runBlocking {
         val orderId = repository.createOrder("user1", 25.0, "admin1", Role.ADMINISTRATOR).getOrNull()!!
 
         repository.updateOrderStatus(orderId, "CONFIRMED", "admin1", Role.ADMINISTRATOR)
@@ -76,7 +76,7 @@ class OrderRepositoryTest {
     }
 
     @Test
-    fun `updateOrderStatus rejects CHECK-invalid status value at DB layer`() = runBlocking {
+    fun `updateOrderStatus rejects CHECK-invalid status value at DB layer`(): Unit = runBlocking {
         val orderId = repository.createOrder("user1", 25.0, "admin1", Role.ADMINISTRATOR).getOrNull()!!
 
         val result = repository.updateOrderStatus(orderId, "WEIRD_STATUS", "admin1", Role.ADMINISTRATOR)
@@ -87,7 +87,7 @@ class OrderRepositoryTest {
     }
 
     @Test
-    fun `updateOrderStatus fails for unknown order id`() = runBlocking {
+    fun `updateOrderStatus fails for unknown order id`(): Unit = runBlocking {
         val result = repository.updateOrderStatus("missing", "COMPLETED", "admin1", Role.ADMINISTRATOR)
         assertThat(result.isFailure).isTrue()
     }
@@ -95,7 +95,7 @@ class OrderRepositoryTest {
     // ── reconcileOrder ──
 
     @Test
-    fun `reconcileOrder persists new reconciliation state and encrypted notes`() = runBlocking {
+    fun `reconcileOrder persists new reconciliation state and encrypted notes`(): Unit = runBlocking {
         val orderId = repository.createOrder("user1", 25.0, "admin1", Role.ADMINISTRATOR).getOrNull()!!
 
         val result = repository.reconcileOrder(
@@ -112,7 +112,7 @@ class OrderRepositoryTest {
     }
 
     @Test
-    fun `getUnreconciledOrders excludes orders already reconciled`() = runBlocking {
+    fun `getUnreconciledOrders excludes orders already reconciled`(): Unit = runBlocking {
         val a = repository.createOrder("user1", 10.0, "admin1", Role.ADMINISTRATOR).getOrNull()!!
         val b = repository.createOrder("user1", 20.0, "admin1", Role.ADMINISTRATOR).getOrNull()!!
 
@@ -125,7 +125,7 @@ class OrderRepositoryTest {
     // ── Query behavior ──
 
     @Test
-    fun `getOrdersByUserId returns only that users orders`() = runBlocking {
+    fun `getOrdersByUserId returns only that users orders`(): Unit = runBlocking {
         repository.createOrder("userA", 10.0, "admin1", Role.ADMINISTRATOR)
         repository.createOrder("userA", 20.0, "admin1", Role.ADMINISTRATOR)
         repository.createOrder("userB", 30.0, "admin1", Role.ADMINISTRATOR)
@@ -139,20 +139,20 @@ class OrderRepositoryTest {
     }
 
     @Test
-    fun `fetching orders for a user with none returns empty list, not null or exception`() = runBlocking {
+    fun `fetching orders for a user with none returns empty list, not null or exception`(): Unit = runBlocking {
         val result = repository.getOrdersByUserId("no-orders-user")
         assertThat(result).isEmpty()
     }
 
     @Test
-    fun `getOrderById returns null for unknown id`() = runBlocking {
+    fun `getOrderById returns null for unknown id`(): Unit = runBlocking {
         assertThat(repository.getOrderById("missing")).isNull()
     }
 
     // ── Concurrent inserts ──
 
     @Test
-    fun `concurrent createOrder calls for the same user produce distinct order ids`() = runBlocking {
+    fun `concurrent createOrder calls for the same user produce distinct order ids`(): Unit = runBlocking {
         val results = (1..15).map { idx ->
             async { repository.createOrder("user1", idx.toDouble(), "admin1", Role.ADMINISTRATOR) }
         }.awaitAll()
@@ -168,7 +168,7 @@ class OrderRepositoryTest {
     // ── ChargingSession ──
 
     @Test
-    fun `createChargingSession links back to order when provided`() = runBlocking {
+    fun `createChargingSession links back to order when provided`(): Unit = runBlocking {
         val orderId = repository.createOrder("user1", 50.0, "admin1", Role.ADMINISTRATOR).getOrNull()!!
         val sessionId = repository.createChargingSession(
             userId = "user1", orderId = orderId, amount = 50.0,

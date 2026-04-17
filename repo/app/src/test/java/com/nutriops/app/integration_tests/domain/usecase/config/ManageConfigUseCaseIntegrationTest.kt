@@ -109,8 +109,10 @@ class ManageConfigUseCaseIntegrationTest {
 
     @Test
     fun `validateAndUseCoupon enforces per-user usage cap via real usage rows`() = runBlocking {
+        // Coupons.discountType is CHECK-constrained to ('FIXED', 'PERCENTAGE')
+        // in the schema -- use the schema-compliant value, not "PERCENT".
         val couponId = useCase.createCoupon(
-            "SAVE10", "10% off", "PERCENT", 10.0, "{}",
+            "SAVE10", "10% off", "PERCENTAGE", 10.0, "{}",
             maxUsesPerUser = 1L, periodDays = 30L, configVersionId = null,
             actorId = "admin1", actorRole = Role.ADMINISTRATOR
         ).getOrNull()!!

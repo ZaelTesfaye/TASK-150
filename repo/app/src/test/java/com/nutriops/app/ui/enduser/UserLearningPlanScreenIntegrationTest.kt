@@ -12,7 +12,12 @@ import com.nutriops.app.domain.model.LearningPlanStatus
 import com.nutriops.app.domain.model.Role
 import com.nutriops.app.domain.usecase.learningplan.ManageLearningPlanUseCase
 import com.nutriops.app.security.AuthManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -20,6 +25,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class UserLearningPlanScreenIntegrationTest {
 
@@ -34,6 +40,7 @@ class UserLearningPlanScreenIntegrationTest {
 
     @Before
     fun setup() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
         driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         NutriOpsDatabase.Schema.create(driver)
         database = NutriOpsDatabase(driver)
@@ -59,6 +66,7 @@ class UserLearningPlanScreenIntegrationTest {
 
     @After
     fun tearDown() {
+        Dispatchers.resetMain()
         driver.close()
     }
 
@@ -78,14 +86,21 @@ class UserLearningPlanScreenIntegrationTest {
     }
 
     @Test
-    fun `transitionStatus() persists the new status and the chip updates`() = runBlocking {
+    fun `transitionStatus() persists the new status and the chip updates`(): Unit = runBlocking {
         val vm = UserLearningPlanViewModel(useCase, authManager)
         composeTestRule.setContent { UserLearningPlanScreen(onBack = {}, viewModel = vm) }
 
         val plan = learningPlanRepo.getLearningPlansByUserId(authManager.currentUserId).first()
         vm.transitionStatus(plan.id, LearningPlanStatus.IN_PROGRESS)
-        composeTestRule.waitForIdle()
 
+        // viewModelScope.launch is fire-and-forget — poll the DB until the
+        // status change has been persisted, then assert.
+        composeTestRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking {
+                learningPlanRepo.getLearningPlanById(plan.id)?.status ==
+                    LearningPlanStatus.IN_PROGRESS.name
+            }
+        }
         val updated = learningPlanRepo.getLearningPlanById(plan.id)!!
         assertThat(updated.status).isEqualTo(LearningPlanStatus.IN_PROGRESS.name)
     }

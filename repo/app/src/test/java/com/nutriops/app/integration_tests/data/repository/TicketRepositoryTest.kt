@@ -50,7 +50,7 @@ class TicketRepositoryTest {
     // ── Create + retrieve by id ──
 
     @Test
-    fun `create and retrieve by id returns equal data including status, priority, subject`() = runBlocking {
+    fun `create and retrieve by id returns equal data including status, priority, subject`(): Unit = runBlocking {
         val id = createTicket(
             userId = "user1", subject = "Late delivery",
             type = TicketType.DELAY, priority = TicketPriority.HIGH
@@ -68,7 +68,7 @@ class TicketRepositoryTest {
     }
 
     @Test
-    fun `SLA first-response and resolution deadlines are persisted`() = runBlocking {
+    fun `SLA first-response and resolution deadlines are persisted`(): Unit = runBlocking {
         val id = createTicket("user1")
         val ticket = repository.getTicketById(id)!!
 
@@ -80,14 +80,14 @@ class TicketRepositoryTest {
     }
 
     @Test
-    fun `getTicketById returns null for unknown id`() = runBlocking {
+    fun `getTicketById returns null for unknown id`(): Unit = runBlocking {
         assertThat(repository.getTicketById("missing")).isNull()
     }
 
     // ── Status transitions ──
 
     @Test
-    fun `transitionTicketStatus persists new status`() = runBlocking {
+    fun `transitionTicketStatus persists new status`(): Unit = runBlocking {
         val id = createTicket("user1")
         repository.assignTicket(id, "agent1", "agent1", Role.AGENT)
         val res = repository.transitionTicketStatus(id, TicketStatus.IN_PROGRESS, "agent1", Role.AGENT)
@@ -99,7 +99,7 @@ class TicketRepositoryTest {
     }
 
     @Test
-    fun `invalid status transition is rejected and status unchanged`() = runBlocking {
+    fun `invalid status transition is rejected and status unchanged`(): Unit = runBlocking {
         val id = createTicket("user1")
 
         val res = repository.transitionTicketStatus(id, TicketStatus.RESOLVED, "agent1", Role.AGENT)
@@ -109,7 +109,7 @@ class TicketRepositoryTest {
     }
 
     @Test
-    fun `transitionTicketStatus fails for unknown ticket id`() = runBlocking {
+    fun `transitionTicketStatus fails for unknown ticket id`(): Unit = runBlocking {
         val res = repository.transitionTicketStatus("missing", TicketStatus.ASSIGNED, "agent1", Role.AGENT)
         assertThat(res.isFailure).isTrue()
     }
@@ -117,7 +117,7 @@ class TicketRepositoryTest {
     // ── assignTicket ──
 
     @Test
-    fun `assignTicket persists agent id and moves status to ASSIGNED`() = runBlocking {
+    fun `assignTicket persists agent id and moves status to ASSIGNED`(): Unit = runBlocking {
         val id = createTicket("user1")
 
         val res = repository.assignTicket(id, "agent1", "admin1", Role.ADMINISTRATOR)
@@ -129,7 +129,7 @@ class TicketRepositoryTest {
     }
 
     @Test
-    fun `assignTicket fails for unknown ticket id`() = runBlocking {
+    fun `assignTicket fails for unknown ticket id`(): Unit = runBlocking {
         val res = repository.assignTicket("missing", "agent1", "admin1", Role.ADMINISTRATOR)
         assertThat(res.isFailure).isTrue()
     }
@@ -137,7 +137,7 @@ class TicketRepositoryTest {
     // ── Filtered queries ──
 
     @Test
-    fun `getTicketsByUserId returns only that users tickets`() = runBlocking {
+    fun `getTicketsByUserId returns only that users tickets`(): Unit = runBlocking {
         createTicket("userA", subject = "A1")
         createTicket("userA", subject = "A2")
         createTicket("userB", subject = "B1")
@@ -152,7 +152,7 @@ class TicketRepositoryTest {
     }
 
     @Test
-    fun `getOpenTickets excludes RESOLVED and CLOSED tickets`() = runBlocking {
+    fun `getOpenTickets excludes RESOLVED and CLOSED tickets`(): Unit = runBlocking {
         val open = createTicket("user1", subject = "open")
         val progressing = createTicket("user1", subject = "wip")
         val toBeResolved = createTicket("user1", subject = "done")
@@ -172,7 +172,7 @@ class TicketRepositoryTest {
     }
 
     @Test
-    fun `getTicketsByAgentId returns only tickets assigned to that agent`() = runBlocking {
+    fun `getTicketsByAgentId returns only tickets assigned to that agent`(): Unit = runBlocking {
         val t1 = createTicket("user1", subject = "t1")
         val t2 = createTicket("user2", subject = "t2")
         repository.assignTicket(t1, "agentA", "agentA", Role.AGENT)
@@ -186,7 +186,7 @@ class TicketRepositoryTest {
     }
 
     @Test
-    fun `fetching tickets for a user with none returns an empty list, not null`() = runBlocking {
+    fun `fetching tickets for a user with none returns an empty list, not null`(): Unit = runBlocking {
         val result = repository.getTicketsByUserId("never-filed-a-ticket")
         assertThat(result).isEmpty()
     }
@@ -194,7 +194,7 @@ class TicketRepositoryTest {
     // ── Evidence attachment ──
 
     @Test
-    fun `addEvidence persists TEXT evidence linked to the ticket`() = runBlocking {
+    fun `addEvidence persists TEXT evidence linked to the ticket`(): Unit = runBlocking {
         val ticketId = createTicket("user1")
         val evidenceId = repository.addEvidence(
             ticketId = ticketId,
@@ -214,7 +214,7 @@ class TicketRepositoryTest {
     }
 
     @Test
-    fun `addEvidence rejects IMAGE type without contentUri`() = runBlocking {
+    fun `addEvidence rejects IMAGE type without contentUri`(): Unit = runBlocking {
         val ticketId = createTicket("user1")
         val res = repository.addEvidence(
             ticketId = ticketId,

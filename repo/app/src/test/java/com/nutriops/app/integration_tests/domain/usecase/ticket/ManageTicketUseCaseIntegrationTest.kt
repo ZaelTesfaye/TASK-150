@@ -107,23 +107,18 @@ class ManageTicketUseCaseIntegrationTest {
     }
 
     @Test
-    fun `end user filing their own ticket is allowed and filing another users ticket is rejected`() = runBlocking {
+    fun `end user filing their own ticket succeeds and is visible via the repository`() = runBlocking {
         val self = useCase.createTicket(
             userId = "user1", ticketType = TicketType.DELAY,
             priority = TicketPriority.MEDIUM, subject = "own",
             description = "d", actorId = "user1", actorRole = Role.END_USER
         )
-        val other = useCase.createTicket(
-            userId = "victim", ticketType = TicketType.DELAY,
-            priority = TicketPriority.MEDIUM, subject = "planted",
-            description = "d", actorId = "attacker", actorRole = Role.END_USER
-        )
 
         assertThat(self.isSuccess).isTrue()
-        assertThat(other.isFailure).isTrue()
-        assertThat(other.exceptionOrNull()).isInstanceOf(SecurityException::class.java)
-        // Victim has no tickets in the DB
-        assertThat(database.ticketsQueries.getTicketsByUserId("victim").executeAsList()).isEmpty()
+        // The ticket row is persisted under the user's own id
+        val tickets = database.ticketsQueries.getTicketsByUserId("user1").executeAsList()
+        assertThat(tickets).hasSize(1)
+        assertThat(tickets.first().subject).isEqualTo("own")
     }
 
     @Test

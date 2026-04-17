@@ -90,7 +90,7 @@ class ModuleBindingsTest {
     // ── RepositoryModule ── direct @Provides exercise
 
     @Test
-    fun `RepositoryModule provideUserRepository produces a working repo`() = runBlocking {
+    fun `RepositoryModule provideUserRepository produces a working repo`(): Unit = runBlocking {
         val audit = AppModule.provideAuditManager(database)
         val repo = RepositoryModule.provideUserRepository(database, audit)
 
@@ -101,7 +101,7 @@ class ModuleBindingsTest {
     }
 
     @Test
-    fun `RepositoryModule provideProfileRepository produces a working repo`() = runBlocking {
+    fun `RepositoryModule provideProfileRepository produces a working repo`(): Unit = runBlocking {
         val audit = AppModule.provideAuditManager(database)
         val repo = RepositoryModule.provideProfileRepository(database, audit)
 
@@ -118,7 +118,7 @@ class ModuleBindingsTest {
     }
 
     @Test
-    fun `RepositoryModule provideMealPlanRepository produces a working repo`() = runBlocking {
+    fun `RepositoryModule provideMealPlanRepository produces a working repo`(): Unit = runBlocking {
         val audit = AppModule.provideAuditManager(database)
         val repo = RepositoryModule.provideMealPlanRepository(database, audit)
 
@@ -135,7 +135,7 @@ class ModuleBindingsTest {
     }
 
     @Test
-    fun `RepositoryModule provideLearningPlanRepository produces a working repo`() = runBlocking {
+    fun `RepositoryModule provideLearningPlanRepository produces a working repo`(): Unit = runBlocking {
         val audit = AppModule.provideAuditManager(database)
         val repo = RepositoryModule.provideLearningPlanRepository(database, audit)
 
@@ -150,7 +150,7 @@ class ModuleBindingsTest {
     }
 
     @Test
-    fun `RepositoryModule provideTicketRepository produces a working repo with encryption`() = runBlocking {
+    fun `RepositoryModule provideTicketRepository produces a working repo with encryption`(): Unit = runBlocking {
         val audit = AppModule.provideAuditManager(database)
         val encryption = JvmEncryptionManager()
         val repo = RepositoryModule.provideTicketRepository(database, audit, encryption)
@@ -166,7 +166,7 @@ class ModuleBindingsTest {
     }
 
     @Test
-    fun `RepositoryModule provideConfigRepository produces a working repo`() = runBlocking {
+    fun `RepositoryModule provideConfigRepository produces a working repo`(): Unit = runBlocking {
         val audit = AppModule.provideAuditManager(database)
         val repo = RepositoryModule.provideConfigRepository(database, audit)
 
@@ -177,7 +177,7 @@ class ModuleBindingsTest {
     }
 
     @Test
-    fun `RepositoryModule provideRuleRepository produces a working repo`() = runBlocking {
+    fun `RepositoryModule provideRuleRepository produces a working repo`(): Unit = runBlocking {
         val audit = AppModule.provideAuditManager(database)
         val repo = RepositoryModule.provideRuleRepository(database, audit)
 
@@ -193,7 +193,7 @@ class ModuleBindingsTest {
     }
 
     @Test
-    fun `RepositoryModule provideRolloutRepository produces a working repo`() = runBlocking {
+    fun `RepositoryModule provideRolloutRepository produces a working repo`(): Unit = runBlocking {
         val audit = AppModule.provideAuditManager(database)
         val repo = RepositoryModule.provideRolloutRepository(database, audit)
 
@@ -204,7 +204,7 @@ class ModuleBindingsTest {
     }
 
     @Test
-    fun `RepositoryModule provideMessageRepository produces a working repo`() = runBlocking {
+    fun `RepositoryModule provideMessageRepository produces a working repo`(): Unit = runBlocking {
         val repo = RepositoryModule.provideMessageRepository(database)
 
         assertThat(repo).isInstanceOf(MessageRepository::class.java)
@@ -217,7 +217,7 @@ class ModuleBindingsTest {
     }
 
     @Test
-    fun `RepositoryModule provideOrderRepository produces a working repo`() = runBlocking {
+    fun `RepositoryModule provideOrderRepository produces a working repo`(): Unit = runBlocking {
         val audit = AppModule.provideAuditManager(database)
         val encryption = JvmEncryptionManager()
         val repo = RepositoryModule.provideOrderRepository(database, audit, encryption)
@@ -231,7 +231,7 @@ class ModuleBindingsTest {
     // ── Cross-module wiring ──
 
     @Test
-    fun `downstream providers accept the same AuditManager instance without re-wiring`() = runBlocking {
+    fun `downstream providers accept the same AuditManager instance without re-wiring`(): Unit = runBlocking {
         // This asserts the Hilt wiring contract: AppModule.provideAuditManager
         // produces the single instance that every RepositoryModule provider
         // receives. We simulate that by calling AppModule once, then feeding

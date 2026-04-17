@@ -43,7 +43,7 @@ class ManageUsersUseCaseIntegrationTest {
     }
 
     @Test
-    fun `admin creates a user and the password is stored hashed in the real DB`() = runBlocking {
+    fun `admin creates a user and the password is stored hashed in the real DB`(): Unit = runBlocking {
         val result = useCase.createUser(
             "alice", "AlicePass1!", Role.END_USER, "admin1", Role.ADMINISTRATOR
         )
@@ -58,7 +58,7 @@ class ManageUsersUseCaseIntegrationTest {
     }
 
     @Test
-    fun `non-admin actors are denied and no user row is created`() = runBlocking {
+    fun `non-admin actors are denied and no user row is created`(): Unit = runBlocking {
         val result = useCase.createUser(
             "alice", "AlicePass1!", Role.END_USER, "agent1", Role.AGENT
         )
@@ -68,7 +68,7 @@ class ManageUsersUseCaseIntegrationTest {
     }
 
     @Test
-    fun `getAllUsers reflects every real row in the DB when called by admin`() = runBlocking {
+    fun `getAllUsers reflects every real row in the DB when called by admin`(): Unit = runBlocking {
         useCase.createUser("a", "Password1!", Role.END_USER, "admin1", Role.ADMINISTRATOR)
         useCase.createUser("b", "Password1!", Role.AGENT, "admin1", Role.ADMINISTRATOR)
 
@@ -78,7 +78,7 @@ class ManageUsersUseCaseIntegrationTest {
     }
 
     @Test
-    fun `deactivateUser flips isActive in the real DB and writes an UPDATE audit row`() = runBlocking {
+    fun `deactivateUser flips isActive in the real DB and writes an UPDATE audit row`(): Unit = runBlocking {
         val userId = useCase.createUser(
             "alice", "Password1!", Role.END_USER, "admin1", Role.ADMINISTRATOR
         ).getOrNull()!!
@@ -95,7 +95,7 @@ class ManageUsersUseCaseIntegrationTest {
     }
 
     @Test
-    fun `duplicate username insertion is rejected by the repository (unique constraint)`() = runBlocking {
+    fun `duplicate username insertion is rejected by the repository (unique constraint)`(): Unit = runBlocking {
         useCase.createUser("alice", "P1!abcdef", Role.END_USER, "admin1", Role.ADMINISTRATOR)
         val second = useCase.createUser(
             "alice", "P2!xyz123", Role.AGENT, "admin1", Role.ADMINISTRATOR

@@ -15,7 +15,12 @@ import com.nutriops.app.domain.model.TicketType
 import com.nutriops.app.domain.usecase.ticket.ManageTicketUseCase
 import com.nutriops.app.security.AuthManager
 import com.nutriops.app.security.testing.JvmEncryptionManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -23,6 +28,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class AgentScreensIntegrationTest {
 
@@ -38,6 +44,7 @@ class AgentScreensIntegrationTest {
 
     @Before
     fun setup() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
         driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         NutriOpsDatabase.Schema.create(driver)
         database = NutriOpsDatabase(driver)
@@ -82,6 +89,7 @@ class AgentScreensIntegrationTest {
 
     @After
     fun tearDown() {
+        Dispatchers.resetMain()
         driver.close()
     }
 
@@ -101,7 +109,7 @@ class AgentScreensIntegrationTest {
     }
 
     @Test
-    fun `assigning a ticket to self updates the DB and the agent ticket inbox`() = runBlocking {
+    fun `assigning a ticket to self updates the DB and the agent ticket inbox`(): Unit = runBlocking {
         val vm = viewModel()
         composeTestRule.setContent { AgentTicketListScreen(onTicketClick = {}, onBack = {}, viewModel = vm) }
 

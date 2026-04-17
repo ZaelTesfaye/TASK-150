@@ -54,7 +54,7 @@ class SwapMealUseCaseTest {
     // ── executeSwap ──
 
     @Test
-    fun `executeSwap delegates to repository for the owner and returns the new meal id`() = runBlocking {
+    fun `executeSwap delegates to repository for the owner and returns the new meal id`(): Unit = runBlocking {
         coEvery { mealPlanRepository.getMealPlanForMeal("meal1") } returns ownerPlan("user1")
         coEvery { mealPlanRepository.getSwapsForMeal("meal1") } returns listOf(swap("swap1"))
         coEvery { mealPlanRepository.performSwap("meal1", "swap1", "user1", Role.END_USER) } returns
@@ -73,7 +73,7 @@ class SwapMealUseCaseTest {
     }
 
     @Test
-    fun `executeSwap denies end user trying to swap another users meal`() = runBlocking {
+    fun `executeSwap denies end user trying to swap another users meal`(): Unit = runBlocking {
         coEvery { mealPlanRepository.getMealPlanForMeal("meal1") } returns ownerPlan("userB")
 
         val result = useCase.executeSwap(
@@ -89,7 +89,7 @@ class SwapMealUseCaseTest {
     }
 
     @Test
-    fun `executeSwap rejects unknown meal id`() = runBlocking {
+    fun `executeSwap rejects unknown meal id`(): Unit = runBlocking {
         coEvery { mealPlanRepository.getMealPlanForMeal("bogus") } returns null
 
         val result = useCase.executeSwap(
@@ -105,7 +105,7 @@ class SwapMealUseCaseTest {
     }
 
     @Test
-    fun `executeSwap denies swap mapping that does not belong to the target meal (IDOR)`() = runBlocking {
+    fun `executeSwap denies swap mapping that does not belong to the target meal (IDOR)`(): Unit = runBlocking {
         coEvery { mealPlanRepository.getMealPlanForMeal("meal1") } returns ownerPlan("user1")
         // Mapping "swap99" exists but is not associated with meal1
         coEvery { mealPlanRepository.getSwapsForMeal("meal1") } returns listOf(swap("swap1"))
@@ -123,7 +123,7 @@ class SwapMealUseCaseTest {
     }
 
     @Test
-    fun `executeSwap propagates repository failure when swap is outside tolerance`() = runBlocking {
+    fun `executeSwap propagates repository failure when swap is outside tolerance`(): Unit = runBlocking {
         coEvery { mealPlanRepository.getMealPlanForMeal("meal1") } returns ownerPlan("user1")
         coEvery { mealPlanRepository.getSwapsForMeal("meal1") } returns listOf(swap("swap1", withinTolerance = false))
         coEvery { mealPlanRepository.performSwap("meal1", "swap1", "user1", Role.END_USER) } returns
@@ -141,7 +141,7 @@ class SwapMealUseCaseTest {
     }
 
     @Test
-    fun `administrator can swap any users meal`() = runBlocking {
+    fun `administrator can swap any users meal`(): Unit = runBlocking {
         coEvery { mealPlanRepository.getSwapsForMeal("meal1") } returns listOf(swap("swap1"))
         coEvery { mealPlanRepository.performSwap("meal1", "swap1", "admin1", Role.ADMINISTRATOR) } returns
             Result.success("newMeal1")
@@ -159,7 +159,7 @@ class SwapMealUseCaseTest {
     // ── getAvailableSwaps ──
 
     @Test
-    fun `getAvailableSwaps returns swap options for the owner`() = runBlocking {
+    fun `getAvailableSwaps returns swap options for the owner`(): Unit = runBlocking {
         coEvery { mealPlanRepository.getMealPlanForMeal("meal1") } returns ownerPlan("user1")
         coEvery { mealPlanRepository.getSwapsForMeal("meal1") } returns listOf(
             swap("s1"), swap("s2", withinTolerance = false)
@@ -174,7 +174,7 @@ class SwapMealUseCaseTest {
     }
 
     @Test
-    fun `getAvailableSwaps denies end user viewing another users swaps`() = runBlocking {
+    fun `getAvailableSwaps denies end user viewing another users swaps`(): Unit = runBlocking {
         coEvery { mealPlanRepository.getMealPlanForMeal("meal1") } returns ownerPlan("userB")
 
         val result = useCase.getAvailableSwaps("meal1", "userA", Role.END_USER)
@@ -184,7 +184,7 @@ class SwapMealUseCaseTest {
     }
 
     @Test
-    fun `agent role is not permitted to swap meals`() = runBlocking {
+    fun `agent role is not permitted to swap meals`(): Unit = runBlocking {
         val result = useCase.executeSwap(
             originalMealId = "meal1",
             swapMappingId = "swap1",

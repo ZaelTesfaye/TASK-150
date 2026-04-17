@@ -15,7 +15,12 @@ import com.nutriops.app.domain.model.TicketType
 import com.nutriops.app.domain.usecase.ticket.ManageTicketUseCase
 import com.nutriops.app.security.AuthManager
 import com.nutriops.app.security.testing.JvmEncryptionManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -23,6 +28,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class UserTicketsScreenIntegrationTest {
 
@@ -37,6 +43,7 @@ class UserTicketsScreenIntegrationTest {
 
     @Before
     fun setup() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
         driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         NutriOpsDatabase.Schema.create(driver)
         database = NutriOpsDatabase(driver)
@@ -65,6 +72,7 @@ class UserTicketsScreenIntegrationTest {
 
     @After
     fun tearDown() {
+        Dispatchers.resetMain()
         driver.close()
     }
 
@@ -79,7 +87,7 @@ class UserTicketsScreenIntegrationTest {
     }
 
     @Test
-    fun `creating a ticket via the view model writes a real row visible to the user`() = runBlocking {
+    fun `creating a ticket via the view model writes a real row visible to the user`(): Unit = runBlocking {
         val vm = UserTicketsViewModel(ticketUseCase, authManager)
         composeTestRule.setContent { UserTicketsScreen(onBack = {}, viewModel = vm) }
 

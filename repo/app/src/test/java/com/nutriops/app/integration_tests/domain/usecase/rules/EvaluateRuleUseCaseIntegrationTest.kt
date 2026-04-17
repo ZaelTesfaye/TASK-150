@@ -11,17 +11,25 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 /**
  * Integration test for [EvaluateRuleUseCase] against a real in-memory
- * SQLDelight database. Complements the existing [com.nutriops.app.integration_tests.domain.usecase.rules.RuleHysteresisDurationTest]
+ * SQLDelight database. Complements the existing [RuleHysteresisDurationTest]
  * which focuses on state-machine transitions; this file asserts that rule
  * evaluation persists back to metric snapshots and respects active-rule
  * filtering via the real repository.
+ *
+ * Requires [RobolectricTestRunner] because [EvaluateRuleUseCase] parses
+ * rule conditions through `org.json.JSONObject`, which is an Android-only
+ * class and would be stubbed (returning default values) under a bare JVM
+ * JUnit runner.
  */
+@RunWith(RobolectricTestRunner::class)
 class EvaluateRuleUseCaseIntegrationTest {
 
     private lateinit var driver: JdbcSqliteDriver
@@ -116,7 +124,16 @@ class EvaluateRuleUseCaseIntegrationTest {
     @Test
     fun `backCalculate returns one result per metric snapshot stored in the DB`() = runBlocking {
         val ruleId = createAdherenceRule(minDuration = 0)
-        // Seed two real metric snapshots
+        // createAdherenceRule seeds v1 with createdAt = "now". Patch it to a
+        // known historical date so metric snapshots recorded after this row
+        // can resolve the correct version in the back-calculation filter.
+        driver.execute(
+            identifier = null,
+            sql = "UPDATE RuleVersions SET createdAt = '2026-01-01T00:00:00' WHERE ruleId = '$ruleId' AND version = 1",
+            parameters = 0,
+            binders = null
+        )
+        // Seed two real metric snapshots after v1's new createdAt
         database.metricsSnapshotsQueries.insertMetricsSnapshot(
             id = UUID.randomUUID().toString(), userId = "user1", ruleId = ruleId,
             metricType = "adherence_rate", metricValue = 85.0,

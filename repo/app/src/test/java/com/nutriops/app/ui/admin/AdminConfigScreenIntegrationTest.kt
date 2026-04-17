@@ -12,7 +12,12 @@ import com.nutriops.app.data.repository.RolloutRepository
 import com.nutriops.app.domain.model.Role
 import com.nutriops.app.domain.usecase.config.ManageConfigUseCase
 import com.nutriops.app.security.AuthManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -20,6 +25,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class AdminConfigScreenIntegrationTest {
 
@@ -34,6 +40,7 @@ class AdminConfigScreenIntegrationTest {
 
     @Before
     fun setup() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
         driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         NutriOpsDatabase.Schema.create(driver)
         database = NutriOpsDatabase(driver)
@@ -49,6 +56,11 @@ class AdminConfigScreenIntegrationTest {
             useCase.createConfig("feature.x", "on", authManager.currentUserId, Role.ADMINISTRATOR)
             useCase.createConfig("feature.y", "off", authManager.currentUserId, Role.ADMINISTRATOR)
         }
+    }
+
+    @After
+    fun resetMainDispatcher() {
+        Dispatchers.resetMain()
     }
 
     @After
@@ -70,7 +82,7 @@ class AdminConfigScreenIntegrationTest {
     }
 
     @Test
-    fun `viewmodel createConfig writes a new row readable via the repository`() = runBlocking {
+    fun `viewmodel createConfig writes a new row readable via the repository`(): Unit = runBlocking {
         val vm = AdminConfigViewModel(useCase, authManager)
         composeTestRule.setContent { AdminConfigScreen(onBack = {}, viewModel = vm) }
 

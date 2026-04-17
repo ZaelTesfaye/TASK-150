@@ -75,7 +75,7 @@ class AdminRolloutsScreenIntegrationTest {
     }
 
     @Test
-    fun `starting a canary rollout writes a CANARY row and updates the screen status`() = runBlocking {
+    fun `starting a canary rollout writes a CANARY row and updates the screen status`(): Unit = runBlocking {
         val vm = AdminRolloutsViewModel(configUseCase, authManager)
         composeTestRule.setContent { AdminRolloutsScreen(onBack = {}, viewModel = vm) }
 

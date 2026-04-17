@@ -75,13 +75,13 @@ class RuleEvaluationWorkerTest {
             .build()
 
     @Test
-    fun `doWork with no users and no rules completes successfully`() = runBlocking {
+    fun `doWork with no users and no rules completes successfully`(): Unit = runBlocking {
         val result = buildWorker().doWork()
         assertThat(result).isEqualTo(ListenableWorker.Result.success())
     }
 
     @Test
-    fun `doWork iterates only active users`() = runBlocking {
+    fun `doWork iterates only active users`(): Unit = runBlocking {
         // Seed two active and one inactive user
         insertUser("active-a", isActive = true)
         insertUser("inactive", isActive = false)
@@ -107,7 +107,7 @@ class RuleEvaluationWorkerTest {
     }
 
     @Test
-    fun `doWork evaluates only the specified user when userId input is provided`() = runBlocking {
+    fun `doWork evaluates only the specified user when userId input is provided`(): Unit = runBlocking {
         insertUser("target", isActive = true)
         insertUser("bystander", isActive = true)
         val ruleId = createAdherenceRule(minDurationMinutes = 0)
@@ -128,7 +128,7 @@ class RuleEvaluationWorkerTest {
     }
 
     @Test
-    fun `doWork skips users with no prior metric snapshots`() = runBlocking {
+    fun `doWork skips users with no prior metric snapshots`(): Unit = runBlocking {
         insertUser("user1", isActive = true)
         createAdherenceRule(minDurationMinutes = 0)
 
@@ -143,7 +143,7 @@ class RuleEvaluationWorkerTest {
     // ── Explicit observable side-effect assertions ──
 
     @Test
-    fun `worker writes exactly one rule_eval snapshot per rule per evaluated user`() = runBlocking {
+    fun `worker writes exactly one rule_eval snapshot per rule per evaluated user`(): Unit = runBlocking {
         insertUser("u-one", isActive = true)
         val r1 = createAdherenceRule(minDurationMinutes = 0)
         val r2 = createAdherenceRule(minDurationMinutes = 0)
@@ -161,7 +161,7 @@ class RuleEvaluationWorkerTest {
     }
 
     @Test
-    fun `persisted rule_eval snapshot carries the triggered flag and reason metadata`() = runBlocking {
+    fun `persisted rule_eval snapshot carries the triggered flag and reason metadata`(): Unit = runBlocking {
         insertUser("u-triggered", isActive = true)
         val triggeredRule = createAdherenceRule(minDurationMinutes = 0)
         insertMetric("u-triggered", triggeredRule, "adherence_rate", 95.0) // above threshold
@@ -177,7 +177,7 @@ class RuleEvaluationWorkerTest {
     }
 
     @Test
-    fun `second worker run is idempotent - appends another snapshot, does not mutate the first`() = runBlocking {
+    fun `second worker run is idempotent - appends another snapshot, does not mutate the first`(): Unit = runBlocking {
         insertUser("u", isActive = true)
         val ruleId = createAdherenceRule(minDurationMinutes = 0)
         insertMetric("u", ruleId, "adherence_rate", 85.0)

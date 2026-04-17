@@ -14,7 +14,12 @@ import com.nutriops.app.domain.model.HealthGoal
 import com.nutriops.app.domain.model.MealTime
 import com.nutriops.app.domain.usecase.profile.ManageProfileUseCase
 import com.nutriops.app.security.AuthManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -22,6 +27,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class UserProfileScreenIntegrationTest {
 
@@ -36,6 +42,7 @@ class UserProfileScreenIntegrationTest {
 
     @Before
     fun setup() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
         driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         NutriOpsDatabase.Schema.create(driver)
         database = NutriOpsDatabase(driver)
@@ -50,6 +57,7 @@ class UserProfileScreenIntegrationTest {
 
     @After
     fun tearDown() {
+        Dispatchers.resetMain()
         driver.close()
     }
 
@@ -68,7 +76,7 @@ class UserProfileScreenIntegrationTest {
     }
 
     @Test
-    fun `saveProfile persists a real row readable via the repository`() = runBlocking {
+    fun `saveProfile persists a real row readable via the repository`(): Unit = runBlocking {
         val vm = viewModel()
         composeTestRule.setContent { UserProfileScreen(onBack = {}, viewModel = vm) }
 
