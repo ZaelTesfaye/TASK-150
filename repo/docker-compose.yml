@@ -27,6 +27,10 @@ services:
     volumes:
       - gradle-cache:/root/.gradle
       - ./app/build/reports:/app/app/build/reports
+      # run_tests.sh reads JUnit XML from app/build/test-results/testDebugUnitTest
+      # on the host to produce the pass/fail summary; bind-mount that path too
+      # so the XMLs survive container teardown.
+      - ./app/build/test-results:/app/app/build/test-results
     command: ["gradle", ":app:testDebugUnitTest", "--no-daemon", "--no-parallel", "-Dorg.gradle.workers.max=2"]
 
 volumes:
