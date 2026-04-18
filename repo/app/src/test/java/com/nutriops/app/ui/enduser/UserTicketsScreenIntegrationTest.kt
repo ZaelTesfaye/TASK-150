@@ -92,7 +92,16 @@ class UserTicketsScreenIntegrationTest {
         composeTestRule.setContent { UserTicketsScreen(onBack = {}, viewModel = vm) }
 
         vm.createTicket(TicketType.DISPUTE, TicketPriority.HIGH, "Dispute #1", "Wrong item received")
-        composeTestRule.waitForIdle()
+        // createTicket is launched on viewModelScope and then suspends into
+        // Dispatchers.IO inside the repository, so waitForIdle alone cannot
+        // guarantee the write is visible. Poll the DB until the row lands.
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            runBlocking {
+                ticketUseCase.getTicketsByUser(
+                    authManager.currentUserId, authManager.currentUserId, Role.END_USER
+                ).any { it.subject == "Dispute #1" }
+            }
+        }
 
         val tickets = ticketUseCase.getTicketsByUser(
             authManager.currentUserId, authManager.currentUserId, Role.END_USER

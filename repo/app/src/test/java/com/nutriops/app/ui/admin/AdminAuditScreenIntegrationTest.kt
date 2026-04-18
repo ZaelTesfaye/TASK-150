@@ -2,6 +2,7 @@ package com.nutriops.app.ui.admin
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
@@ -69,7 +70,12 @@ class AdminAuditScreenIntegrationTest {
         auditManager.log("Order", "o2", AuditAction.CREATE, "admin1", Role.ADMINISTRATOR)
 
         composeTestRule.onNodeWithText("Refresh").performClick()
-        composeTestRule.waitForIdle()
+        // Refresh re-queries via viewModelScope → withContext(IO); waitForIdle
+        // only drains Compose, so poll for the updated "5 events" label.
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithText("5 events (append-only, no modifications allowed)")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
 
         composeTestRule.onNodeWithText("5 events (append-only, no modifications allowed)")
             .assertIsDisplayed()

@@ -88,7 +88,11 @@ class UserProfileScreenIntegrationTest {
             allergies = listOf("peanut"),
             preferredMealTimes = listOf(MealTime.BREAKFAST, MealTime.LUNCH, MealTime.DINNER)
         )
-        composeTestRule.waitForIdle()
+        // saveProfile fires on viewModelScope and suspends into Dispatchers.IO;
+        // waitForIdle only drains Compose, so poll the DB until the write lands.
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            runBlocking { profileRepository.getProfileByUserId(authManager.currentUserId) != null }
+        }
 
         val stored = profileRepository.getProfileByUserId(authManager.currentUserId)
         assertThat(stored).isNotNull()
