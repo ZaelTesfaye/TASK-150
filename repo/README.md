@@ -321,6 +321,19 @@ SQLDelight schema files in `app/src/main/sqldelight/`:
 
 ## Testing
 
+### Canonical Test Run (Required for review)
+Use `run_tests.sh` via Docker. This is the only accepted path for audit and CI.
+
+```bash
+./run_tests.sh
+```
+
+### Local Developer Convenience (Not for review submission)
+`run_tests_local.sh` requires a local Gradle/JDK setup and is not Docker-contained.
+Results from this path are not valid for review purposes.
+
+---
+
 The canonical test path is `./run_tests.sh` (Docker). The suite covers:
 
 - **Security:** Password hashing, RBAC permission matrix, authorization

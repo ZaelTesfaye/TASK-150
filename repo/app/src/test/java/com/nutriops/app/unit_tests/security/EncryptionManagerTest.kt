@@ -13,17 +13,17 @@ import org.robolectric.annotation.Config
 
 /**
  * Direct tests for [EncryptionManager]. The production manager is backed by
- * Android Keystore (`KeyStore.getInstance("AndroidKeyStore")`), which is not
- * available on the host JVM — Robolectric has no shadow for the Keystore
- * provider at the Cipher-backing layer, so this entire test class is
- * `@Ignore`d on the Docker/JVM pipeline. Equivalent coverage runs via:
+ * Android Keystore, and ApplicationProvider.getApplicationContext() under
+ * Robolectric 4.11 fails with a ShadowPackageParser error in this project's
+ * Docker/JVM pipeline even with manifest = Config.NONE. Equivalent coverage
+ * runs via:
  *   - [com.nutriops.app.integration_tests.domain.usecase.ticket.ManageTicketUseCaseIntegrationTest]
  *     which exercises real AES-256-GCM via the [com.nutriops.app.security.testing.JvmEncryptionManager]
  *     test double, and
  *   - the instrumented `DiModuleValidationTest` which asserts the real
  *     EncryptionManager round-trips on a device where the Keystore works.
  */
-@Ignore("Requires Android Keystore (emulator/device); covered by integration tests using JvmEncryptionManager")
+@Ignore("Robolectric ShadowPackageParser fails to build an Application under JVM; covered by integration tests using JvmEncryptionManager")
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28], manifest = Config.NONE)
 class EncryptionManagerTest {

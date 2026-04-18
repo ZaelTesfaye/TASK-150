@@ -13,12 +13,13 @@ import org.robolectric.annotation.Config
 
 /**
  * Direct tests for [DatabaseKeyManager]. The manager wraps Android Keystore
- * operations which are not functional on the host JVM (no AndroidKeyStore
- * provider). These tests run on-device only; the Docker/JVM pipeline
- * `@Ignore`s them. Coverage on a real device runs via the instrumented
- * `DiModuleValidationTest`.
+ * operations which are not functional on the host JVM, and this project's
+ * Robolectric setup additionally fails in ShadowPackageParser when building
+ * an Application context. These tests run on-device only; the Docker/JVM
+ * pipeline `@Ignore`s them. Coverage on a real device runs via the
+ * instrumented `DiModuleValidationTest`.
  */
-@Ignore("Requires Android Keystore (emulator/device); JVM Robolectric has no compatible provider")
+@Ignore("Requires Android Keystore (emulator/device); Robolectric ShadowPackageParser fails to build Application context in this project")
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28], manifest = Config.NONE)
 class DatabaseKeyManagerTest {

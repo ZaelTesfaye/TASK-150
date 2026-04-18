@@ -1,10 +1,13 @@
 #!/bin/bash
+# WARNING: This script is for local development convenience only.
+# It is NOT the canonical test path. CI and code review use run_tests.sh (Docker).
+# Results from this script are not accepted as audit evidence.
 # -----------------------------------------------------------------------------
 # NutriOps LOCAL Test Script — NOT THE CANONICAL PATH.
 # -----------------------------------------------------------------------------
-# WARNING: This script runs the test suite against your host-installed JDK
-# and Android SDK via local Gradle. It is provided only for developers who
-# are iterating quickly inside an IDE and are aware of the implications:
+# This script runs the test suite against your host-installed JDK and Android
+# SDK via local Gradle. It is provided only for developers iterating quickly
+# inside an IDE and aware of the implications:
 #
 #   * It is NOT how CI validates correctness.
 #   * It is NOT Docker-contained; results depend on your local toolchain.

@@ -4,6 +4,8 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
 import com.nutriops.app.audit.AuditManager
@@ -15,6 +17,7 @@ import com.nutriops.app.domain.usecase.messaging.ManageMessagingUseCase
 import com.nutriops.app.security.AuthManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -38,6 +41,9 @@ class UserMessagesScreenIntegrationTest {
     private lateinit var authManager: AuthManager
     private lateinit var messagingUseCase: ManageMessagingUseCase
     private lateinit var messageRepo: MessageRepository
+    private val activeVms = mutableListOf<ViewModel>()
+
+    private fun <T : ViewModel> T.tracked(): T = also { activeVms.add(it) }
 
     @Before
     fun setup() {
@@ -70,7 +76,17 @@ class UserMessagesScreenIntegrationTest {
 
     @After
     fun tearDown() {
+        // Cancel every ViewModel's viewModelScope up front so no more
+        // coroutines can be launched against the driver we're about to
+        // close. composeTestRule disposes the composition AFTER @After
+        // runs, so without this explicit cancel the VM is still live when
+        // driver.close() fires and a late IO refresh (post-markAllAsRead,
+        // etc.) races the close, surfacing as UncaughtExceptionsBeforeTest
+        // on the next test's TestScope init.
+        activeVms.forEach { it.viewModelScope.cancel() }
+        activeVms.clear()
         Dispatchers.resetMain()
+        Thread.sleep(500)
         driver.close()
     }
 
@@ -79,7 +95,7 @@ class UserMessagesScreenIntegrationTest {
         composeTestRule.setContent {
             UserMessagesScreen(
                 onBack = {},
-                viewModel = UserMessagesViewModel(messagingUseCase, authManager)
+                viewModel = UserMessagesViewModel(messagingUseCase, authManager).tracked()
             )
         }
         composeTestRule.waitForIdle()
@@ -90,7 +106,7 @@ class UserMessagesScreenIntegrationTest {
 
     @Test
     fun `Mark All Read flips the real DB row for the active user`(): Unit = runBlocking {
-        val vm = UserMessagesViewModel(messagingUseCase, authManager)
+        val vm = UserMessagesViewModel(messagingUseCase, authManager).tracked()
         composeTestRule.setContent { UserMessagesScreen(onBack = {}, viewModel = vm) }
 
         composeTestRule.onNodeWithText("Mark All Read").performClick()
@@ -108,7 +124,7 @@ class UserMessagesScreenIntegrationTest {
 
     @Test
     fun `Todos tab renders the real seeded todo`() {
-        val vm = UserMessagesViewModel(messagingUseCase, authManager)
+        val vm = UserMessagesViewModel(messagingUseCase, authManager).tracked()
         composeTestRule.setContent { UserMessagesScreen(onBack = {}, viewModel = vm) }
 
         composeTestRule.onNodeWithText("Todos (1)").performClick()

@@ -3,6 +3,8 @@ package com.nutriops.app.ui.admin
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
 import com.nutriops.app.audit.AuditManager
@@ -14,6 +16,7 @@ import com.nutriops.app.domain.usecase.config.ManageConfigUseCase
 import com.nutriops.app.security.AuthManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -37,6 +40,9 @@ class AdminConfigScreenIntegrationTest {
     private lateinit var auditManager: AuditManager
     private lateinit var authManager: AuthManager
     private lateinit var useCase: ManageConfigUseCase
+    private val activeVms = mutableListOf<ViewModel>()
+
+    private fun <T : ViewModel> T.tracked(): T = also { activeVms.add(it) }
 
     @Before
     fun setup() {
@@ -59,19 +65,26 @@ class AdminConfigScreenIntegrationTest {
     }
 
     @After
-    fun resetMainDispatcher() {
-        Dispatchers.resetMain()
-    }
-
-    @After
     fun tearDown() {
+        // Cancel every ViewModel's viewModelScope up front so no more
+        // coroutines can be launched against the driver we're about to
+        // close. composeTestRule disposes the composition AFTER @After runs
+        // (rules unwind around the method, not inside it), so without this
+        // explicit cancel the VM is still live when driver.close() fires.
+        activeVms.forEach { it.viewModelScope.cancel() }
+        activeVms.clear()
+        Dispatchers.resetMain()
+        // Brief settle for any IO pool coroutine that observed the cancel
+        // while mid-JDBC call. They'll finish their current statement and
+        // return before we invalidate the driver.
+        Thread.sleep(500)
         driver.close()
     }
 
     @Test
     fun `section counts reflect real rows in the in-memory DB`() {
         composeTestRule.setContent {
-            AdminConfigScreen(onBack = {}, viewModel = AdminConfigViewModel(useCase, authManager))
+            AdminConfigScreen(onBack = {}, viewModel = AdminConfigViewModel(useCase, authManager).tracked())
         }
 
         composeTestRule.waitForIdle()
@@ -83,7 +96,7 @@ class AdminConfigScreenIntegrationTest {
 
     @Test
     fun `viewmodel createConfig writes a new row readable via the repository`(): Unit = runBlocking {
-        val vm = AdminConfigViewModel(useCase, authManager)
+        val vm = AdminConfigViewModel(useCase, authManager).tracked()
         composeTestRule.setContent { AdminConfigScreen(onBack = {}, viewModel = vm) }
 
         vm.createConfig("feature.z", "true")
