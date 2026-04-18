@@ -3,6 +3,8 @@ package com.nutriops.app.ui.agent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
 import com.nutriops.app.audit.AuditManager
@@ -17,6 +19,7 @@ import com.nutriops.app.security.AuthManager
 import com.nutriops.app.security.testing.JvmEncryptionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -41,6 +44,9 @@ class AgentScreensIntegrationTest {
     private lateinit var authManager: AuthManager
     private lateinit var ticketRepository: TicketRepository
     private lateinit var ticketUseCase: ManageTicketUseCase
+    private val activeVms = mutableListOf<ViewModel>()
+
+    private fun <T : ViewModel> T.tracked(): T = also { activeVms.add(it) }
 
     @Before
     fun setup() {
@@ -89,12 +95,15 @@ class AgentScreensIntegrationTest {
 
     @After
     fun tearDown() {
+        activeVms.forEach { it.viewModelScope.cancel() }
+        activeVms.clear()
         Dispatchers.resetMain()
+        Thread.sleep(500)
         driver.close()
     }
 
     private fun viewModel(): AgentTicketsViewModel =
-        AgentTicketsViewModel(ticketUseCase, authManager, auditManager)
+        AgentTicketsViewModel(ticketUseCase, authManager, auditManager).tracked()
 
     @Test
     fun `open ticket list shows the real seeded tickets`() {

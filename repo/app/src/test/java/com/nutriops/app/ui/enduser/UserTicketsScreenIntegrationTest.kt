@@ -3,6 +3,8 @@ package com.nutriops.app.ui.enduser
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
 import com.nutriops.app.audit.AuditManager
@@ -17,6 +19,7 @@ import com.nutriops.app.security.AuthManager
 import com.nutriops.app.security.testing.JvmEncryptionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -40,6 +43,9 @@ class UserTicketsScreenIntegrationTest {
     private lateinit var auditManager: AuditManager
     private lateinit var authManager: AuthManager
     private lateinit var ticketUseCase: ManageTicketUseCase
+    private val activeVms = mutableListOf<ViewModel>()
+
+    private fun <T : ViewModel> T.tracked(): T = also { activeVms.add(it) }
 
     @Before
     fun setup() {
@@ -72,14 +78,17 @@ class UserTicketsScreenIntegrationTest {
 
     @After
     fun tearDown() {
+        activeVms.forEach { it.viewModelScope.cancel() }
+        activeVms.clear()
         Dispatchers.resetMain()
+        Thread.sleep(500)
         driver.close()
     }
 
     @Test
     fun `user ticket list renders the tickets owned by the active user`() {
         composeTestRule.setContent {
-            UserTicketsScreen(onBack = {}, viewModel = UserTicketsViewModel(ticketUseCase, authManager))
+            UserTicketsScreen(onBack = {}, viewModel = UserTicketsViewModel(ticketUseCase, authManager).tracked())
         }
         composeTestRule.waitForIdle()
 
@@ -88,7 +97,7 @@ class UserTicketsScreenIntegrationTest {
 
     @Test
     fun `creating a ticket via the view model writes a real row visible to the user`(): Unit = runBlocking {
-        val vm = UserTicketsViewModel(ticketUseCase, authManager)
+        val vm = UserTicketsViewModel(ticketUseCase, authManager).tracked()
         composeTestRule.setContent { UserTicketsScreen(onBack = {}, viewModel = vm) }
 
         vm.createTicket(TicketType.DISPUTE, TicketPriority.HIGH, "Dispute #1", "Wrong item received")

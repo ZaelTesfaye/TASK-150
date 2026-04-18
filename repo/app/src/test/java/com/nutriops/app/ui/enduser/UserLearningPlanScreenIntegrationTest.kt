@@ -3,6 +3,8 @@ package com.nutriops.app.ui.enduser
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
 import com.nutriops.app.audit.AuditManager
@@ -14,6 +16,7 @@ import com.nutriops.app.domain.usecase.learningplan.ManageLearningPlanUseCase
 import com.nutriops.app.security.AuthManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -37,6 +40,9 @@ class UserLearningPlanScreenIntegrationTest {
     private lateinit var authManager: AuthManager
     private lateinit var learningPlanRepo: LearningPlanRepository
     private lateinit var useCase: ManageLearningPlanUseCase
+    private val activeVms = mutableListOf<ViewModel>()
+
+    private fun <T : ViewModel> T.tracked(): T = also { activeVms.add(it) }
 
     @Before
     fun setup() {
@@ -66,7 +72,10 @@ class UserLearningPlanScreenIntegrationTest {
 
     @After
     fun tearDown() {
+        activeVms.forEach { it.viewModelScope.cancel() }
+        activeVms.clear()
         Dispatchers.resetMain()
+        Thread.sleep(500)
         driver.close()
     }
 
@@ -75,7 +84,7 @@ class UserLearningPlanScreenIntegrationTest {
         composeTestRule.setContent {
             UserLearningPlanScreen(
                 onBack = {},
-                viewModel = UserLearningPlanViewModel(useCase, authManager)
+                viewModel = UserLearningPlanViewModel(useCase, authManager).tracked()
             )
         }
         composeTestRule.waitForIdle()
@@ -87,7 +96,7 @@ class UserLearningPlanScreenIntegrationTest {
 
     @Test
     fun `transitionStatus() persists the new status and the chip updates`(): Unit = runBlocking {
-        val vm = UserLearningPlanViewModel(useCase, authManager)
+        val vm = UserLearningPlanViewModel(useCase, authManager).tracked()
         composeTestRule.setContent { UserLearningPlanScreen(onBack = {}, viewModel = vm) }
 
         val plan = learningPlanRepo.getLearningPlansByUserId(authManager.currentUserId).first()
